@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>会议分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin: 0;
+        }
+        .status-bar {
+            display: flex;
+            align-items: center;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-left: 30px;
+            font-size: 14px;
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 2px solid;
+        }
+        .status-dot.active {
+            background-color: #4CAF50;
+            border-color: #4CAF50;
+        }
+        .status-dot.inactive {
+            background-color: #fff;
+            border-color: #ccc;
+        }
+        .tabs {
+            margin-bottom: 20px;
+        }
+        .tabs button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            border: none;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .tabs button.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #fdfdfd;
+            border: 1px solid #eee;
+            border-radius: 6px;
+        }
+        .section h2 {
+            font-size: 18px;
+            color: #34495e;
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .card h3 {
+            font-size: 16px;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .card p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 5px;
+        }
+        .chart-placeholder {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px auto;
+            font-size: 12px;
+            color: #777;
+        }
+        .keyword-tag {
+            display: inline-block;
+            background-color: #e7f3ff;
+            color: #007bff;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        .keyword-tag.half{
+            background-color: rgb(244, 169, 29);
+            color: rgb(158, 107, 11);
+        }
+        .speaker-card {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+            text-align: center;
+        }
+        .speaker-card.active {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+<!-- 
+        <div class="tabs">
+            <button 
+                v-for="tab in tabs"
+                :key="tab.id"
+                @click="activeTab = tab.id"
+                :class="{ active: activeTab === tab.id }">
+                {{ tab.name }}
+            </button>
+        </div> -->
+
+        <div v-if="activeTab === 'info'">
+            <div class="section">
+                <h2>基本信息</h2>
+                <p>这里显示会议的基本信息内容...</p>
+            </div>
+        </div>
+
+        <div v-if="activeTab === 'analysis'">
+            <div class="section">
+                <h2><span style="color: #7b68ee;">✦</span> 会议总览</h2>
+                <div class="grid-container" style="grid-template-columns: 4fr 1fr 1fr 1fr; align-items: center;">
+                    <div class="card">
+                        <h3>会议摘要</h3>
+                        <p v-html = meetingSummary></p>
+                    </div>
+                    <div class="card" style="background-color: #fffef0; text-align: center;">
+                        <p style="font-size:12px; color: #aaa;">讲者讲课时长总计</p>
+                        <p style="font-size: 28px; color: #f5a623; font-weight: bold;">{{ speakerTime }} <span style="font-size:14px; color: #aaa;">小时</span></p>
+                    </div>
+                    <div class="card" style="background-color: #f0f8ff; text-align: center;">
+                        <p style="font-size:12px; color: #aaa;">会议时长</p>
+                        <p style="font-size: 28px; color: #4a90e2; font-weight: bold;">{{ meetingDuration }} <span style="font-size:14px; color: #aaa;">小时</span></p>
+                    </div>
+                    <div class="card" style="background-color: #f0fff0; text-align: center;">
+                        <p style="font-size:12px; color: #aaa;">参会人次</p>
+                        <p style="font-size: 28px; color: #50e3c2; font-weight: bold;">{{ participantCount }} <span style="font-size:14px; color: #aaa;">人</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2><span style="color: #7b68ee;">✦</span> 参会人分析</h2>
+                <div class="grid-container" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="card">
+                        <h3>参会人词云:</h3>
+                        <img style="width: 100%;" src="./wordcount.jpg" alt="">
+                    </div>
+                    <!-- <div class="card">
+                        <h3>参会时长占比:</h3>
+                        <div class="chart-placeholder">环形图</div>
+                        <ul>
+                            <li v-for="item in participantDurationRatio" :key="item.label">{{ item.label }}: {{ item.value }}</li>
+                        </ul>
+                    </div> -->
+                    <!-- <div class="card">
+                        <h3>参会人画像:</h3>
+                        <div>
+                            <span style="background-color: #ffe9d2; color: #fa8c16; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-right: 5px;">临床医生</span> 
+                            <span style="background-color: #e6f7ff; color: #1890ff; padding: 3px 8px; border-radius: 4px; font-size: 12px;">研究人员</span>
+                        </div>
+                        <h4>关注点:</h4>
+                        <ul>
+                            <li v-for="point in participantProfile.concerns" :key="point">{{ point }}</li>
+                        </ul>
+                        <h4>参会目的:</h4>
+                        <ul>
+                            <li v-for="goal in participantProfile.goals" :key="goal">{{ goal }}</li>
+                        </ul>
+                        <h4>行为偏好:</h4>
+                        <ul>
+                            <li v-for="pref in participantProfile.preferences" :key="pref">{{ pref }}</li>
+                        </ul>
+                    </div> -->
+                </div>
+            </div>
+
+            <div class="section">
+                <h2><span style="color: #7b68ee;">✦</span> 讲者内容契合度分析</h2>
+                <div style="display: flex; margin-bottom: 15px;">
+                    <div v-for="speaker in speakers" :key="speaker.name" 
+                         class="speaker-card" 
+                         :class="{ active: activeSpeaker === speaker.id }"
+                         @click="activeSpeaker = speaker.id">
+                        {{ speaker.name }} ({{ speaker.duration }})
+                        <div v-if="activeSpeaker === speaker.id" style="font-size: 12px; color: #007bff; margin-top: 5px;">{{ speaker.focus }}</div>
+                    </div>
+                </div>
+                <div v-if="activeSpeakerData">
+                    <h3>评估结论:</h3>
+                    <span v-for="keyword in activeSpeakerData.keywords" :key="keyword" :class = "keyword === '部分契合'?'keyword-tag half':'keyword-tag'">{{ keyword }}</span>
+                    
+                    <h3>核心主题</h3>
+                    <p >{{ activeSpeakerData.keyMessage }}</p>
+                    <h3>契合度与偏差分析:</h3>
+                    <p v-for="fb in activeSpeakerData.feedback" :key="fb" >{{ fb }}</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2><span style="color: #7b68ee;">✦</span>结论与案例启示</h2>
+                <p v-for="group in conclusion" :key="group.title">
+                    <strong>{{ group.title }}:</strong> {{ group.description }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                meetingTitle: '8.8 安徽癌痛研讨会',
+                tabs: [
+                    { id: 'info', name: '基本信息' },
+                    { id: 'analysis', name: '智能分析' },
+                ],
+                activeTab: 'analysis',
+                meetingSummary: `本次学术交流强调了将规范化、个体化和前瞻性的癌痛管理作为肿瘤综合治疗不可或缺一部分的紧迫性。会议的一个核心主线是，使用NRS等标准化工具进行精准的疼痛评估，是所有后续治疗决策的基石。讲者们共同倡导一种由指南驱动的治疗路径，主要遵循WHO三阶梯止痛原则，并强调对于中重度疼痛，阿片类药物是治疗的核心。其中，使用奥施康定等长效阿片类药物控制背景痛，并联用即释剂型处理爆发痛，被一致认为是实现有效疼痛管理的基础策略。
+
+<br><br>一个重要的讨论焦点是阿片类药物的滴定策略。会议通过病例分享和讨论，有力地论证了采取积极的12小时剂量调整方案的安全性和有效性，这种方法能更迅速地达到疼痛控制目标，直接回应并试图消除临床实践中对于更保守的24小时调整方案的依赖和顾虑。此外，研讨会提供了超越纯粹镇痛的整体视角，强调了预判、预防和管理阿片类药物相关不良事件（尤其是便秘、尿潴留和嗜睡）的至关重要性，并给出了具体的处理方案。会议还展示了疼痛管理如何与靶向治疗（RET抑制剂）和骨改良剂（地舒单抗）等先进抗肿瘤疗法相辅相成，凸显了其作为保障患者能够耐受并获益于现代肿瘤治疗的关键支持作用。最后，所有讲者都贯穿了人文关怀的理念，强调结合心理支持和患者教育，以全面提升患者的生活质量和维护其生命尊严。`,
+                speakerTime: '1',
+                meetingDuration: '1.18',
+                participantCount: '4',
+                participantDurationRatio: [
+                    { label: '2小时', value: '●' },
+                    { label: '1.5-2小时', value: '●' },
+                    { label: '1-1.5小时', value: '●' },
+                    { label: '0.5-1小时', value: '●' },
+                    { label: '0.5小时以内', value: '●' },
+                ],
+                participantProfile: {
+                    concerns: [
+                        '维我替尼在骨质疏松患者中的疗效',
+                        '药物与钙剂联合使用的效果'
+                    ],
+                    goals: [
+                        '了解药物疗效数据,优化患者治疗方案'
+                    ],
+                    preferences: [
+                        '喜欢真实病例分享和疗效数据分析',
+                        '希望获得明确的处方建议'
+                    ]
+                },
+                speakers: [
+                    {
+                        id: 'li',
+                        name: '夏逸文',
+                        duration: '29分钟',
+                        focus: '"癌痛规范化滴定病例分享"',
+                        keywords: ["高度契合"],
+                        keyMessage:"夏医生的分享为整个会议的癌痛管理讨论奠定了理论和实践基础。他不仅从临床角度，更从人文关怀的层面构建了讨论的框架，通过引用中国在“死亡幸福指数”排名偏后的数据 ，深刻地指出了提供有尊严的临终关怀的社会意义。",
+                        feedback: ["讲者的理论阐述和病例分享完全围绕“规范化滴定”这一核心主题展开。内容具有很强的基础性和指导性，与议题标题高度匹配。"]
+                    },
+                    {
+                        id: 'wu',
+                        name: '景齐骏',
+                        duration: '15分钟',
+                        focus: '"癌痛全程管理病例分享"',
+                        keywords: ["部分契合"],
+                        keyMessage:"景医生的分享是本次会议的科学亮点，他将疼痛管理从一个独立的对症治疗，提升到了一个支持和保障前沿、多模式肿瘤治疗得以实施的关键支柱的高度。",
+                        feedback: ["显著且有价值的延伸。 尽管病例确实覆盖了患者的“全程”治疗，但“全程管理”这一标题过于笼统，未能体现分享内容的真正亮点。实际的焦点在于疼痛管理如何与前沿的、多模式的肿瘤治疗策略（靶向、放疗、骨改良剂）相整合。这种延伸是合理且极具价值的，它将讨论的层次从基础的疼痛管理提升到了其在现代精准肿瘤学中的关键支持作用。"]
+                    },
+                    {
+                        id: 'ding',
+                        name: '吴中华',
+                        duration: '18分钟',
+                        focus: '"癌痛规范化管理病例分享"',
+                        keywords: ["高度契合"],
+                        keyMessage:"吴医生的分享提供了一个冷静而务实的视角，聚焦于一位患有难治性疼痛的进行性肉瘤患者的长期管理，深刻探讨了阿片类药物耐受性和累积毒性这两大挑战。",
+                        feedback: ["对特定领域的深度挖掘。 该分享是对“规范化管理”在极具挑战性的长期姑息治疗场景中的一次生动实践展示。它完美地阐释了在真实世界中管理药物耐受性和不良反应的复杂性，这些都是规范化管理的核心组成部分。"]
+                    }
+                ],
+                conclusion:[
+                    {
+                        "title":"三段式病例叙事的教育力量",
+                        "description":"本次会议的结构，无论是精心设计还是偶然形成，都极为成功。从一个基础的起始滴定病例（夏逸文），到一个整合性的现代肿瘤学病例（景齐骏），再到一个极具挑战性的长期姑息治疗病例（吴中华），这种递进式的结构提供了一个全面而引人入胜的癌痛管理叙事。该结构向听众展示了规范化疼痛管理在患者整个疾病旅程中的普适性和必要性。战略启示： 这种“基础-进阶-专家”的病例叙事结构，是一个非常高效的医学教育模板，值得在未来的学术活动中复制和推广。"
+                    },
+                    {
+                        "title":"填补“滴定恐惧”的认知差距",
+                        "description":"由主持人蔡晶发起的问答环节 ，敏锐地揭示了一个普遍存在的临床实践差距：临床医生对于实施12小时快速阿片类药物剂量调整方案普遍存在顾虑和恐惧。景齐骏医生对此方案充满信心的认可和推荐，为在场听众提供了强有力的同伴教育。"
+                    },
+                    {
+                        "title":"战略启示",
+                        "description":" 这明确了一个医学教育的机遇点。申办方可以开发针对性的医学教育项目（如专题研讨会、专家共识文章、小范围病例讨论会），专注于建立医生在快速阿片类药物滴定方面的信心，从而改善临床实践，使患者更快获益。"
+                    },
+                    {
+                        "title":"精准医疗时代的产品定位",
+                        "description":"景齐骏医生的病例分享具有关键的战略意义。它清晰地表明，像奥施康定这样的“传统”支持治疗药物，非但没有被现代疗法所取代，反而成为了这些前沿疗法得以成功实施的关键赋能者。战略启示： 市场和医学信息的传递，应将产品定位为不仅仅是镇痛药，更是创新疗法的关键合作伙伴，它通过保障患者的生活质量和治疗耐受性，使患者能够最大程度地从靶向治疗、免疫治疗等前沿科技中获益。"
+                    },
+                    {
+                        "title":"真实世界证据的信誉价值",
+                        "description":"吴中华医生对于管理超大剂量和棘手不良反应的坦诚分享，为会议增添了巨大的可信度。它表明申办方和讲者团队理解临床医生在真实世界中所面临的困境，讨论内容超越了理想化的、一帆风顺的病例。战略启示： 在学术交流中纳入真实、充满挑战的病例，能够有效地建立与医疗界的信任。这表明申办方理解并尊重临床实践的全部复杂性，而不仅仅是那些容易处理的简单场景，从而有助于建立更强大、更持久的合作关系。"
+                    },
+                ],
+                activeSpeaker: 'ding' // Default active speaker
+            },
+            computed: {
+                activeSpeakerData() {
+                    return this.speakers.find(s => s.id === this.activeSpeaker);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
