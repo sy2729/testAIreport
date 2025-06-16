@@ -180,11 +180,11 @@
                     {{ item.text }} <span v-if="item.arrow">&gt;</span>
                 </li> -->
                 <li class="menu-group-title">活动管理</li>
-                <li v-for="item in activityMenu" :key="item.text" :class="{active: item.text === '会议管理'}">
+                <li v-for="item in activityMenu" :key="item.text" :class="{active: item.text === '会议管理'}" @click="openMenu(item.url)">
                     {{ item.text }}
                 </li>
                  <li class="menu-group-title">外部联系人</li>
-                <li v-for="item in externalContactsMenu" :key="item.text">
+                <li v-for="item in externalContactsMenu" :key="item.text" @click="activeTab = item.id">
                     {{ item.text }} <span v-if="item.arrow">&gt;</span>
                 </li>
                 <li class="menu-group-title">进院计划</li>
@@ -266,7 +266,7 @@
                     { text: '系列会' },
                     { text: '任务列表' },
                     { text: '学术拜访' },
-                    { text: '会议管理' },
+                    { text: '会议管理',url:"./events.html"},
                     { text: '随访管理' },
                     { text: '拜访' },
                     { text: '远程会议分组' },
@@ -315,7 +315,12 @@
                 meetingMaterial: {
                     name: '临床研究：克洛凯在治疗癌痛中的作用机制'
                 },
-                participantCount: '', // No value visible in image
+                participantCount: '12', // No value visible in image
+            },
+            methods: {
+                openMenu(url) {
+                    window.location.href = url;
+                }
             }
         });
     </script>

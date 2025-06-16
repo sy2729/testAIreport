@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>市场战略情报中心 (Marketing Dashboard Pro)</title>
+    <!-- Chart.js for beautiful charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons for a modern look -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        :root {
+            --primary-color: #005f9e;
+            --secondary-color: #007bff;
+            --accent-color: #f9a825;
+            --bg-color: #f4f7f9;
+            --card-bg-color: #ffffff;
+            --text-color: #333;
+            --text-secondary-color: #667;
+            --border-color: #e0e6ed;
+            --green: #28a745;
+            --red: #dc3545;
+            --orange: #fd7e14;
+            --blue-light: #e3f2fd;
+            --yellow-light: #fff8e1;
+            --green-light: #e8f5e9;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+        .dashboard-container {
+            padding: 1.5rem;
+            max-width: 1600px;
+            margin: auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+        .header h1 i {
+            margin-right: 0.75rem;
+        }
+        .filters {
+            display: flex;
+            gap: 1rem;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            background-color: var(--card-bg-color);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .filter-group label {
+            margin-right: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary-color);
+        }
+        .filter-group select, .filter-group input {
+            border: none;
+            background: transparent;
+            font-size: 0.875rem;
+            font-family: inherit;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .kpi-card {
+            background: var(--card-bg-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .kpi-card .kpi-title {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+            margin-bottom: 0.5rem;
+        }
+        .kpi-card .kpi-title i {
+            margin-right: 0.5rem;
+            color: var(--secondary-color);
+        }
+        .kpi-card .kpi-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        .kpi-card .kpi-trend {
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        .kpi-card .kpi-trend.up { color: var(--green); }
+        .kpi-card .kpi-trend.down { color: var(--red); }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: auto auto;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .card {
+            background: var(--card-bg-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        .card-title i {
+            margin-right: 0.75rem;
+        }
+        
+        /* Specific Card Layouts */
+        .message-health-card { grid-column: 1 / 3; }
+        .competition-card { grid-column: 3 / 4; grid-row: 1 / 3; }
+        .hot-topics-card { grid-column: 1 / 2; }
+        .unmet-needs-card { grid-column: 2 / 3; }
+        .kol-radar-card { grid-column: 1 / 4; }
+
+        .message-list .message-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1.5fr;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .message-list .message-item:last-child {
+            border-bottom: none;
+        }
+        .message-item .message-name {
+            font-weight: 500;
+        }
+        .message-item .resonance-gauge {
+            width: 100%;
+            height: 8px;
+            background-color: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .message-item .resonance-gauge .gauge-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #86b7fe, var(--secondary-color));
+            border-radius: 4px;
+        }
+        .message-item .sentiment-breakdown {
+            display: flex;
+            height: 20px;
+        }
+        .sentiment-breakdown div {
+            font-size: 0.75rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease-in-out;
+        }
+        .sentiment-breakdown div:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        .sentiment-positive { background-color: var(--green); }
+        .sentiment-neutral { background-color: #6c757d; }
+        .sentiment-challenged { background-color: var(--orange); }
+
+        .card-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+        }
+        .legend-color-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 0.5rem;
+        }
+
+        .unmet-need-item {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--accent-color);
+        }
+        .unmet-need-item .need-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .unmet-need-item .need-quote {
+            font-style: italic;
+            color: var(--text-secondary-color);
+            font-size: 0.9rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            vertical-align: middle; 
+        }
+        th {
+            font-weight: 600;
+            color: var(--text-secondary-color);
+        }
+        .kol-potential {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .kol-potential i {
+            color: var(--accent-color);
+        }
+        
+        .chart-container {
+             position: relative;
+             height: 200px; 
+             width: 100%;
+        }
+
+        .action-button {
+            background: none;
+            border: 1px solid var(--secondary-color);
+            color: var(--secondary-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        /* NEW: Kanban Board Styles */
+        .kanban-board {
+            margin-top: 1.5rem;
+        }
+        .kanban-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        .kanban-column {
+            background-color: var(--bg-color);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+        .kanban-column-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 0 0.5rem 1rem 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .kanban-column-title i {
+            margin-right: 0.75rem;
+        }
+        .kanban-column-title .count {
+            margin-left: auto;
+            background-color: #e9ecef;
+            color: var(--text-secondary-color);
+            font-size: 0.8rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 1rem;
+        }
+        .task-card {
+            background-color: var(--card-bg-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 4px solid;
+        }
+        .task-card.todo { border-color: var(--secondary-color); }
+        .task-card.inprogress { border-color: var(--accent-color); }
+        .task-card.done { border-color: var(--green); }
+        
+        .task-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .task-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+            margin-bottom: 1rem;
+        }
+        .task-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        .task-owner {
+            font-weight: 500;
+            color: var(--text-secondary-color);
+        }
+        .task-evidence-btn {
+            background: none;
+            border: none;
+            color: var(--secondary-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        .task-evidence-content {
+            display: none;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            font-style: italic;
+            font-size: 0.85rem;
+            border-left: 3px solid var(--border-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .message-health-card { grid-column: 1 / 3; }
+            .competition-card { grid-column: 1 / 3; grid-row: auto; }
+            .hot-topics-card { grid-column: 1 / 2; }
+            .unmet-needs-card { grid-column: 2 / 3; }
+            .kol-radar-card { grid-column: 1 / 3; }
+        }
+        @media (max-width: 768px) {
+            .main-grid, .kanban-grid {
+                grid-template-columns: 1fr;
+            }
+            .card {
+                grid-column: auto !important;
+                grid-row: auto !important;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .filters {
+                flex-wrap: wrap;
+            }
+            .message-list .message-item {
+                 grid-template-columns: 1fr;
+                 gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <!-- Dashboard Header -->
+        <header class="header">
+            <h1><i data-lucide="siren"></i>市场战略情报中心</h1>
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="date-range">时间范围:</label>
+                    <select id="date-range">
+                        <option>过去90天</option>
+                        <option>过去30天</option>
+                        <option>本季度</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="product">产品线:</label>
+                    <select id="product">
+                        <option>全部产品</option>
+                        <option selected>长效阿片类药物</option>
+                        <option>抗抑郁药</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <!-- Top Level KPIs -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-title"><i data-lucide="presentation"></i>总会议场次</div>
+                <div class="kpi-value">28</div>
+                <div class="kpi-trend up"><i data-lucide="arrow-up-right"></i>+5 vs 上一周期</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title"><i data-lucide="users"></i>总触达HCP</div>
+                <div class="kpi-value">457</div>
+                <div class="kpi-trend up"><i data-lucide="arrow-up-right"></i>+12% vs 上一周期</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title"><i data-lucide="shield-check"></i>品牌信息共鸣度</div>
+                <div class="kpi-value">86.5%</div>
+                <div class="kpi-trend down"><i data-lucide="arrow-down-right"></i>-1.2% vs 上一周期</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title"><i data-lucide="megaphone"></i>我方声量 (SOV)</div>
+                <div class="kpi-value">62%</div>
+                <div class="kpi-trend up"><i data-lucide="arrow-up-right"></i>+3.5% vs 上一周期</div>
+            </div>
+        </section>
+
+        <!-- Main Dashboard Grid -->
+        <main class="main-grid">
+            <!-- 模块一: 核心品牌信息健康度 -->
+            <div class="card message-health-card">
+                <div class="card-header">
+                    <h2 class="card-title"><i data-lucide="message-square-heart"></i>核心品牌信息健康度</h2>
+                </div>
+                <div class="card-legend">
+                    <div class="legend-item">
+                        <span class="legend-color-box" style="background: linear-gradient(90deg, #86b7fe, var(--secondary-color));"></span>
+                        信息共鸣度 (综合接受度)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color-box" style="background-color: var(--green);"></span>
+                        HCP情绪: 认同
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color-box" style="background-color: #6c757d;"></span>
+                        HCP情绪: 中立
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color-box" style="background-color: var(--orange);"></span>
+                        HCP情绪: 质疑
+                    </div>
+                </div>
+                <div class="message-list">
+                    <div class="message-item">
+                        <span class="message-name">1. 长效阿片类药物是中重度癌痛全程管理的一线选择</span>
+                        <div class="resonance-gauge" title="信息共鸣度: 95%"><div class="gauge-bar" style="width: 95%;"></div></div>
+                        <div class="sentiment-breakdown">
+                            <div class="sentiment-positive" style="width: 80%;" title="认同: 80%"></div>
+                            <div class="sentiment-neutral" style="width: 15%;" title="中立: 15%"></div>
+                            <div class="sentiment-challenged" style="width: 5%;" title="质疑: 5%"></div>
+                        </div>
+                    </div>
+                    <div class="message-item">
+                        <span class="message-name">2. 平稳血药浓度，有效控制背景痛，减少爆发痛</span>
+                        <div class="resonance-gauge" title="信息共鸣度: 91%"><div class="gauge-bar" style="width: 91%;"></div></div>
+                         <div class="sentiment-breakdown">
+                            <div class="sentiment-positive" style="width: 85%;" title="认同: 85%"></div>
+                            <div class="sentiment-neutral" style="width: 15%;" title="中立: 15%"></div>
+                        </div>
+                    </div>
+                    <div class="message-item">
+                        <span class="message-name">3. 对比阿片类镇痛药，口服剂型滴定更方便、精准</span>
+                        <div class="resonance-gauge" title="信息共鸣度: 78%"><div class="gauge-bar" style="width: 78%;"></div></div>
+                         <div class="sentiment-breakdown">
+                            <div class="sentiment-positive" style="width: 60%;" title="认同: 60%"></div>
+                            <div class="sentiment-neutral" style="width: 25%;" title="中立: 25%"></div>
+                            <div class="sentiment-challenged" style="width: 15%;" title="质疑: 15%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 模块二: 竞争环境扫描 -->
+            <div class="card competition-card">
+                 <div class="card-header">
+                    <h2 class="card-title"><i data-lucide="swords"></i>竞争环境扫描</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="sovChart"></canvas>
+                </div>
+                <h3 class="card-title" style="font-size: 1rem; margin-top: 1.5rem;"><i data-lucide="quote"></i>竞品动态提及</h3>
+                <div class="unmet-need-item" style="border-left-color: var(--red);">
+                    <p class="need-quote">“...阿片类镇痛药虽然不用口服，但起效慢，发热的病人还不敢用，还是有点麻烦...”</p>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary-color)"><a href="./index.html" target="_blank"> 源自: 癌痛规范化诊疗学术交流会</a></span>
+                </div>
+                 <div class="unmet-need-item" style="border-left-color: var(--red);">
+                    <p class="need-quote">“...有些患者会问到另一种长效药（竞品X），特别是对于肝功能有顾虑的患者...”</p>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary-color)">源自: 晚期肝癌疼痛管理研讨会</span>
+                </div>
+            </div>
+
+            <!-- 模块三: 市场热点与未满足需求 -->
+            <div class="card hot-topics-card">
+                 <div class="card-header">
+                    <h2 class="card-title"><i data-lucide="flame"></i>市场热点话题</h2>
+                </div>
+                <!-- Placeholder for a word cloud, using styled text instead -->
+                <div style="text-align: center; padding: 1rem; line-height: 1.8;">
+                    <span style="font-size: 2em; color: var(--primary-color); font-weight: 700;">神经病理性疼痛</span>
+                    <span style="font-size: 1.5em; color: var(--secondary-color);">快速滴定</span>
+                    <span style="font-size: 1.2em; color: #333;">超大剂量</span>
+                    <span style="font-size: 1.7em; color: var(--primary-color); opacity: 0.8;">不良反应管理</span>
+                    <span style="font-size: 1.3em; color: var(--text-secondary-color);">医保支付</span>
+                    <span style="font-size: 1.6em; color: var(--secondary-color); opacity: 0.9;">患者教育</span>
+                </div>
+            </div>
+
+            <div class="card unmet-needs-card">
+                 <div class="card-header">
+                    <h2 class="card-title"><i data-lucide="lightbulb"></i>新发现的未满足需求</h2>
+                </div>
+                <div class="unmet-need-item">
+                    <p class="need-title">对特殊人群的剂量调整共识不足</p>
+                    <p class="need-quote">“对于肾功能不全的病人，阿片类到底怎么减量，减多少，说实话我们心里也没底...”</p>
+                </div>
+                <div class="unmet-need-item">
+                    <p class="need-title">对爆发痛的起效时间仍有改善空间</p>
+                    <p class="need-quote">“即释吗啡吃下去还是要等一会，病人最痛苦的就是那十几分钟...”</p>
+                </div>
+            </div>
+
+            <!-- 模块五: 新兴意见领袖雷达 -->
+            <div class="card kol-radar-card">
+                <div class="card-header">
+                     <h2 class="card-title"><i data-lucide="radar"></i>新兴意见领袖 (KOL) 雷达</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>医院</th>
+                            <th>高质量提问数</th>
+                            <th>影响力潜力</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>王明医生</td>
+                            <td>安徽省立医院 肿瘤科</td>
+                            <td>5</td>
+                            <td class="kol-potential">
+                                <i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star"></i>
+                            </td>
+                            <td><button class="action-button">加入医生计划</button></td>
+                        </tr>
+                         <tr>
+                            <td>李静主任</td>
+                            <td>蚌埠医学院第一附属医院</td>
+                            <td>3</td>
+                            <td class="kol-potential">
+                                <i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star"></i><i data-lucide="star"></i>
+                            </td>
+                            <td><button class="action-button">加入医生计划</button></td>
+                        </tr>
+                         <tr>
+                            <td>张伟医生</td>
+                            <td>当涂县人民医院 疼痛科</td>
+                            <td>2</td>
+                            <td class="kol-potential">
+                                <i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star"></i><i data-lucide="star"></i>
+                            </td>
+                            <td><button class="action-button">加入医生计划</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+        
+        <!-- NEW: Strategic Task Kanban -->
+        <section class="kanban-board">
+            <h2 class="card-title" style="margin-bottom: 1.5rem; font-size: 1.5rem;"><i data-lucide="clipboard-check"></i>战略任务看板 (市场部/医学部)</h2>
+            <div class="kanban-grid">
+                <div class="kanban-column">
+                    <h3 class="kanban-column-title" style="color: var(--secondary-color);"><i data-lucide="list-todo"></i>待办 (To Do)<span class="count">1</span></h3>
+                    <div class="task-card todo">
+                        <p class="task-title">基层医院能力差距分析</p>
+                        <p class="task-description">洞察到基层医院因缺少放疗设备，无法提供完整的多模式镇痛。需评估此差距的普遍性，并制定相应的市场/教育策略。</p>
+                        <div class="task-footer">
+                            <span class="task-owner">负责人: 市场部</span>
+                            <button class="task-evidence-btn" onclick="toggleEvidence(this)"><i data-lucide="message-circle"></i> 查看佐证</button>
+                        </div>
+                        <div class="task-evidence-content">
+                            “...鉴于我们医院没有放疗设备，所以我们跟我们中心医院那边沟通以后就让病人按到转到上级医院进行一个病因治疗...”
+                        </div>
+                    </div>
+                </div>
+                <div class="kanban-column">
+                    <h3 class="kanban-column-title" style="color: var(--accent-color);"><i data-lucide="loader-2" class="spin"></i>进行中 (In Progress)<span class="count">1</span></h3>
+                    <div class="task-card inprogress">
+                        <p class="task-title">制作“快速滴定”最佳实践手册</p>
+                        <p class="task-description">多位医生对12小时快速调整剂量的安全性存疑。需整理高级别专家的成功案例，制作易于理解的指导手册以打消顾虑。</p>
+                        <div class="task-footer">
+                            <span class="task-owner">负责人: 医学部</span>
+                            <button class="task-evidence-btn" onclick="toggleEvidence(this)"><i data-lucide="message-circle"></i> 查看佐证</button>
+                        </div>
+                        <div class="task-evidence-content">
+                            “...不知道，就是您在临床上对于这个12小时调整剂量，还是说24小时调整剂量，就是您这边有一个什么样的一个一个就是这个调整剂量的习惯...”
+                        </div>
+                    </div>
+                </div>
+                <div class="kanban-column">
+                    <h3 class="kanban-column-title" style="color: var(--green);"><i data-lucide="check-circle-2"></i>已完成 (Completed)<span class="count">1</span></h3>
+                    <div class="task-card done">
+                        <p class="task-title">发布超大剂量阿片药物不良反应管理通告</p>
+                        <p class="task-description">针对临床上使用超大剂量阿片药物（如日剂量 > 500mg）时遇到的**潴留和嗜睡等问题，已整理专家经验并发布管理建议。</p>
+                        <div class="task-footer">
+                            <span class="task-owner">负责人: 医学部</span>
+                            <button class="task-evidence-btn" onclick="toggleEvidence(this)"><i data-lucide="message-circle"></i> 查看佐证</button>
+                        </div>
+                         <div class="task-evidence-content">
+                            “...他第二问题它就出现了小便难解考虑一个RP内的一个副作用就是**潴留。他另外他是一个中老年男性的，他前列腺也肯定也不好...”
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        function toggleEvidence(button) {
+            const content = button.parentElement.nextElementSibling;
+            const icon = button.querySelector('i');
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+                icon.setAttribute('data-lucide', 'message-circle');
+            } else {
+                content.style.display = 'block';
+                icon.setAttribute('data-lucide', 'chevrons-up');
+            }
+            lucide.createIcons(); // Re-render icon
+        }
+
+        window.onload = function() {
+            // Render Lucide icons
+            lucide.createIcons();
+            
+            // Add spinning animation to in-progress icon
+            const inProgressIcon = document.querySelector('.spin');
+            if(inProgressIcon) {
+                const animationStyle = document.createElement('style');
+                animationStyle.innerHTML = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .spin { animation: spin 2s linear infinite; }`;
+                document.head.appendChild(animationStyle);
+            }
+
+            // Chart.js - Share of Voice Chart
+            const sovCtx = document.getElementById('sovChart');
+            if (sovCtx) {
+                 new Chart(sovCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['我方产品 (长效阿片类药物)', '竞品Y (阿片类镇痛药)', '竞品Z'],
+                        datasets: [{
+                            label: '会议声量(提及次数)',
+                            data: [125, 68, 22],
+                            backgroundColor: [
+                                'rgba(0, 123, 255, 0.7)',
+                                'rgba(220, 53, 69, 0.7)',
+                                'rgba(108, 117, 125, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(0, 123, 255, 1)',
+                                'rgba(220, 53, 69, 1)',
+                                'rgba(108, 117, 125, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, // Allows chart to fill container height
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        };
+    </script>
+</body>
+</html>

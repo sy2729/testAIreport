@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自办会 - 已关会</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            font-size: 14px;
+        }
+        #app {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 220px;
+            background-color: #fff;
+            padding: 20px 0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 0 20px 20px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 10px;
+        }
+        .search-input {
+            width: calc(100% - 20px);
+            padding: 8px 10px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+        }
+        .sidebar-menu li {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #595959;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-menu li.active {
+            background-color: #ff9718;
+            color: white;
+            border-left-color: #ff9718;
+            font-weight: 600;
+        }
+        .sidebar-menu li:hover {
+            /* background-color: #f5f5f5; */
+        }
+        .sidebar-menu .menu-group-title {
+            padding: 15px 20px 5px 20px;
+            font-size: 12px;
+            color: #8c8c8c;
+            text-transform: uppercase;
+        }
+        .sidebar-footer {
+            padding: 15px 20px;
+            font-size: 12px;
+            color: #8c8c8c;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #fff;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative; /* Added for positioning the toggle button */
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .page-header h1 {
+            font-size: 20px;
+            color: #262626;
+            margin: 0;
+        }
+        .page-tabs {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .page-tabs button {
+            padding: 10px 20px;
+            margin-right: 2px;
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: #595959;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px; /* Align with border */
+        }
+        .page-tabs button.active {
+            color: #ffaa18;
+            border-bottom: 3px solid #ff8818;
+            font-weight: bold;
+        }
+        .actions-bar {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+        .actions-bar button {
+            margin-left: 8px;
+            padding: 6px 15px;
+            border: 1px solid #d9d9d9;
+            background-color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .actions-bar button.primary {
+            background-color: #ff8818;
+            color: #fff;
+            border-color: #ff9f18;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #262626;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 3px solid #ff9718;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            gap: 10px 20px; /* row-gap column-gap */
+            font-size: 14px;
+        }
+        .info-grid dt {
+            color: #8c8c8c;
+            font-weight: normal;
+            text-align: right;
+        }
+        .info-grid dd {
+            margin-left: 0;
+            color: #262626;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+        .file-icon {
+            width: 32px; height: 32px; 
+            margin-right: 10px; 
+            background-color: #d9d9d9; /* Placeholder for icon */
+            display: flex; align-items: center; justify-content: center; font-size:10px; color: #fff;
+        }
+
+
+        .toggle-view-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .toggle-view-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Styles for Table View (View 1) */
+        .table-view table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table-view th, .table-view td {
+            border: 1px solid #e0e0e0;
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 13px;
+        }
+        .table-view th {
+            background-color: #f9f9f9;
+            font-weight: 600;
+        }
+        .table-view .action-icons img {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .pagination span, .pagination input {
+            margin: 0 5px;
+            font-size: 13px;
+        }
+        .pagination input {
+            width: 40px;
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        /* Styles for Dashboard View (View 2) */
+        .dashboard-view .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .dashboard-view .stat-card {
+            background-color: #fdfdfd;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            text-align: center;
+        }
+        .dashboard-view .stat-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .dashboard-view .stat-card .label {
+            font-size: 14px;
+            color: #777;
+        }
+        .dashboard-view .chart-container {
+            background-color: #fdfdfd;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+        .dashboard-view .chart-container h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .dashboard-view .info-section {
+            background-color: #fdfdfd;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+        .dashboard-view .info-section h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .dashboard-view .info-section p {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        .dashboard-view .info-section .source-link {
+            font-size: 12px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .dashboard-view .info-section .source-link:hover {
+            text-decoration: underline;
+        }
+        .dashboard-view .grid-2-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="app">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <input type="text" class="search-input" placeholder="搜索功能">
+            </div>
+            <ul class="sidebar-menu">
+                <!-- <li v-for="item in sidebarTopMenu" :key="item.text" :class="{active: item.text === '多类巡访计划'}">
+                    {{ item.text }} <span v-if="item.arrow">&gt;</span>
+                </li> -->
+                <li class="menu-group-title">活动管理</li>
+                <li v-for="item in activityMenu" :key="item.text" :class="{active: item.text === '会议管理'}">
+                    {{ item.text }}
+                </li>
+                 <li class="menu-group-title">外部联系人</li>
+                <li v-for="item in externalContactsMenu" :key="item.text">
+                    {{ item.text }} <span v-if="item.arrow">&gt;</span>
+                </li>
+                <li class="menu-group-title">进院计划</li>
+                 <li v-for="item in hospitalPlanMenu" :key="item.text">
+                    {{ item.text }} <span v-if="item.arrow">&gt;</span>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                &lt;&lt; 收起导航
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <main class="main-content">
+                <button @click="toggleView" class="toggle-view-btn">
+                    {{ currentView === 'tableView' ? '切换到看板视图' : '切换到列表视图' }}
+                </button>
+    
+                <!-- View 1: Table View -->
+                <div v-if="currentView === 'tableView'" class="table-view">
+                    <div class="page-header">
+                        <h1>活动管理</h1>
+                        <div>
+                            <select style="padding: 6px 10px; border-radius: 4px; border: 1px solid #d9d9d9; margin-right:10px;">
+                                <option>筛选</option>
+                            </select>
+                            <select style="padding: 6px 10px; border-radius: 4px; border: 1px solid #d9d9d9; margin-right:10px;">
+                                <option>全部数据</option>
+                            </select>
+                            <button class="actions-bar button primary" style="padding: 6px 15px;">新建</button>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>活动编码</th>
+                                <th>活动名称</th>
+                                <th>活动类型</th>
+                                <th>会议类别</th>
+                                <th>活动目的</th>
+                                <th>会议产品</th>
+                                <th>会议讲者</th>
+                                <th>活动状态</th>
+                                <th>活动开始时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="event in eventsData" :key="event.id">
+                                <td>{{ event.id }}</td>
+                                <td>{{ event.name }}</td>
+                                <td>{{ event.type }}</td>
+                                <td>{{ event.category }}</td>
+                                <td>{{ event.purpose }}</td>
+                                <td>{{ event.product }}</td>
+                                <td>{{ event.speaker }}</td>
+                                <td :style="{ color: event.statusColor }">{{ event.status }}</td>
+                                <td>{{ event.startTime }}</td>
+                                <td class="action-icons">
+                                    <span v-if="event.id !== 'EV0000000973'">view</span>
+                                    <span v-if="event.id== 'EV0000000973'" > <a href="./index.html">view</a></span>
+                                    <span>edit</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        <button>&lt;</button>
+                        <input type="text" value="1">
+                        <span>/ 1</span>
+                        <button>&gt;</button>
+                        <span>每页20条</span>
+                        <span>1 - 10 / 10</span>
+                    </div>
+                </div>
+    
+                <!-- View 2: Dashboard View -->
+                <div v-if="currentView === 'dashboardView'" class="dashboard-view">
+                    <iframe src="./marketing.html" frameborder="0" style="width: 100%; height: 80vh;"></iframe>
+                </div>
+        </main>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                sidebarTopMenu: [
+                    { text: '多类巡访计划', arrow: true },
+                    { text: '报告管理', arrow: true },
+                ],
+                activityMenu: [
+                    { text: '系列会' },
+                    { text: '任务列表' },
+                    { text: '学术拜访' },
+                    { text: '会议管理' },
+                    { text: '随访管理' },
+                    { text: '拜访' },
+                    { text: '远程会议分组' },
+                    { text: '高频参会限额规则' },
+                ],
+                externalContactsMenu: [
+                    { text: '外部联系人', arrow: true }
+                ],
+                hospitalPlanMenu: [
+                    { text: '进院计划', arrow: true }
+                ],
+                currentView: 'tableView', // 'tableView' or 'dashboardView'
+                eventsData: [
+                    { id: 'EV0000001314', name: '测试预分发分支1', type: '自办会报告', category: '', purpose: '', product: '', speaker: '', status: '报告草稿', startTime: '2025-03-21 17:20', statusColor: 'orange' },
+                    { id: 'EV0000001313', name: '111', type: '自办会报告', category: '', purpose: '', product: '', speaker: '', status: '报告草稿', startTime: '2025-03-05 00:00', statusColor: 'orange' },
+                    { id: 'EV0000001274', name: 'shuai - 测试远程...', type: '自办会报告', category: '远程会议', purpose: '', product: '', speaker: '', status: '报告关闭审批通过', startTime: '2025-02-20 00:00', statusColor: 'green' },
+                    { id: 'EV0000001288', name: '我的会议 2024.1...', type: '自办会报告', category: '', purpose: '', product: '', speaker: '', status: '报告草稿', startTime: '2024-12-18 00:00', statusColor: 'orange' },
+                    { id: 'EV0000001267', name: '2024.12.18 演示...', type: '自办会报告', category: '', purpose: '', product: '', speaker: '', status: '报告草稿', startTime: '2024-12-18 00:00', statusColor: 'orange' },
+                    { id: 'EV0000001221', name: '北京科室会', type: '自办会报告', category: '', purpose: '', product: '', speaker: '左丹丹', status: '报告草稿', startTime: '2024-10-30 00:00', statusColor: 'orange' },
+                    { id: 'EV0000000367', name: '克洛凯有效性研...', type: '第三方学术会议', category: '', purpose: '医学研讨', product: 'group0102', speaker: '', status: '计划审批中', startTime: '2023-01-08 00:00', statusColor: '#1890ff' },
+                    { id: 'EV0000000366', name: '克洛凯有效性研...', type: '第三方学术会议', category: '', purpose: '学术培训', product: '维我替尼Combo', speaker: '', status: '计划审批中', startTime: '2023-01-08 00:00', statusColor: '#1890ff' },
+                    { id: 'EV0000000361', name: 'test1', type: '城市会', category: '', purpose: '新产品介绍', product: '厄立立', speaker: '', status: '计划审批中', startTime: '2022-12-05 00:00', statusColor: '#1890ff' },
+                    { id: 'EV0000000972', name: '维我替尼胶囊第...', type: '系列会', category: '', purpose: '学术培训', product: '', speaker: '', status: '计划预执行', startTime: '', statusColor: '#faad14' },
+                    { id: 'EV0000000973', name: '安徽癌痛管理研讨会', type: '自办会', category: '', purpose: '学术培训', product: '', speaker: '', status: '已关会', startTime: '', statusColor: '#faad14' },
+                ],
+                
+                sidebarTopMenu: [ // Keep your existing sidebar data
+                    { text: '多类巡访计划', arrow: true },
+                    { text: '报告管理', arrow: true },
+                ],
+                activityMenu: [
+                    { text: '系列会' },
+                    { text: '任务列表' },
+                    { text: '学术拜访' },
+                    { text: '会议管理' },
+                    { text: '随访管理' },
+                    { text: '拜访' },
+                    { text: '远程会议分组' },
+                    { text: '高频参会限额规则' },
+                ],
+                externalContactsMenu: [
+                    { text: '外部联系人', arrow: true }
+                ],
+                hospitalPlanMenu: [
+                    { text: '进院计划', arrow: true }
+                ]
+            },
+            methods: {
+                toggleView() {
+                    this.currentView = this.currentView === 'tableView' ? 'dashboardView' : 'tableView';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
