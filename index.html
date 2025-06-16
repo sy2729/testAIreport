@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自办会 - 执行中</title>
+    <title>自办会 - 已关会</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     <style>
         body {
@@ -257,7 +257,7 @@
         new Vue({
             el: '#app',
             data: {
-                pageTitle: '自办会 - 执行中',
+                pageTitle: '自办会 - 已关会',
                 sidebarTopMenu: [
                     { text: '多类巡访计划', arrow: true },
                     { text: '报告管理', arrow: true },
@@ -293,11 +293,11 @@
                 ],
                 activeTab: 'basicInfo',
                 actions: [
-                    { text: '编辑', primary: true },
-                    { text: '提交审批' },
-                    { text: '启动签到' },
-                    { text: '开始开会' },
-                    { text: '播放资料' },
+                    // { text: '编辑', primary: true },
+                    // { text: '提交审批' },
+                    // { text: '启动签到' },
+                    // { text: '开始开会' },
+                    // { text: '播放资料' },
                 ],
                 seriesMeetingName: '系列会',
                 basicInfo: [
@@ -307,13 +307,13 @@
                     { label: '计划活动开始时间', value: '2025-03-21 17:26' },
                     { label: '计划活动结束时间', value: '2025-03-21 17:27' },
                     { label: '活动地点', value: '北京' },
-                    { label: '会议平台', value: '' }, // No value visible in image
-                    { label: '会议类别', value: '' }, // No value visible in image
-                    { label: '产品', value: '' },     // No value visible in image
-                    { label: '会议主题', value: '' }, // No value visible in image
+                    { label: '会议平台', value: '腾讯会议' }, // No value visible in image
+                    { label: '会议类别', value: '远程会议' }, // No value visible in image
+                    { label: '产品', value: '癌痛产品' },     // No value visible in image
+                    { label: '会议主题', value: '肿瘤综合治疗中的癌痛管理' }, // No value visible in image
                 ],
                 meetingMaterial: {
-                    name: '临床研究：克洛凯在治疗血脂异常中的作用机制'
+                    name: '临床研究：克洛凯在治疗癌痛中的作用机制'
                 },
                 participantCount: '', // No value visible in image
             }

@@ -189,6 +189,13 @@
 
         <div v-if="activeTab === 'analysis'">
             <div class="section">
+                <h2><span style="color: #7b68ee;">✦</span> 会议待办事项</h2>
+                    <ul style="list-style-type: disc; padding-left: 20px;">
+                        <li v-for="(item, index) in planVsActualData.actionItems" :key="index" style="margin-bottom: 5px;">{{ item }}</li>
+                    </ul>
+                
+            </div>
+            <div class="section">
                 <h2><span style="color: #7b68ee;">✦</span> 会议总览</h2>
                 <div class="grid-container" style="grid-template-columns: 2fr 1fr; align-items: center;">
                     <div class="card">
@@ -371,15 +378,8 @@
                     <p v-for="fb in activeSpeakerData.feedback" :key="fb" >{{ fb }}</p>
                 </div>
             </div>
-
-            <div class="section">
-                <h2><span style="color: #7b68ee;">✦</span>结论与案例启示</h2>
-                <p v-for="group in conclusion" :key="group.title">
-                    <strong>{{ group.title }}:</strong> {{ group.description }}
-                </p>
-            </div>
             <div class="section" v-if="planVsActualData">
-                <h2><span style="color: #7b68ee;">✦</span> 维度四：计划与执行差异分析</h2>
+                <h2><span style="color: #7b68ee;">✦</span>计划与执行差异分析</h2>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
                     <span style="font-size: 1.1em;">核心讲者出席率:</span>
                     <span style="font-size: 1.3em; font-weight: bold; color: #007bff;">{{ planVsActualData.coreSpeakerAttendanceRate }}</span>
@@ -401,14 +401,15 @@
                         </tr>
                     </tbody>
                 </table>
-
-                <div>
-                    <h4 style="margin-bottom: 10px;">会议待办事项 (From Minutes):</h4>
-                    <ul style="list-style-type: disc; padding-left: 20px;">
-                        <li v-for="(item, index) in planVsActualData.actionItems" :key="index" style="margin-bottom: 5px;">{{ item }}</li>
-                    </ul>
-                </div>
             </div>
+            
+            <div class="section">
+                <h2><span style="color: #7b68ee;">✦</span>会议点评与案例启示</h2>
+                <p v-for="group in conclusion" :key="group.title">
+                    <strong>{{ group.title }}:</strong> {{ group.description }}
+                </p>
+            </div>
+            
         </div>
     </div>
 
