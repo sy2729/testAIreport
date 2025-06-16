@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>会议分析</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -152,13 +153,18 @@
         .timeline-div::before{
             content: "";
             position: absolute;
-            left: 58px;
-            transform: translateY(-50%);
+            transform: translateX(-128%) translateY(-50%);
             width: 15px;
             height: 15px;
             border-radius: 50%;
             background-color: #ff8c00;
         }
+        .speaker-level {
+            font-weight: bold;
+            color: orange;
+            font-size: 1.1em;
+        }
+        
     </style>
 </head>
 <body>
@@ -184,25 +190,44 @@
         <div v-if="activeTab === 'analysis'">
             <div class="section">
                 <h2><span style="color: #7b68ee;">✦</span> 会议总览</h2>
-                <div class="grid-container" style="grid-template-columns: 4fr 1fr 1fr 1fr; align-items: center;">
+                <div class="grid-container" style="grid-template-columns: 2fr 1fr; align-items: center;">
                     <div class="card">
                         <h3>会议摘要</h3>
                         <p v-html = meetingSummary style="font-size: 16px;"></p>
                     </div>
-                    <div class="card" style="background-color: #fffef0; text-align: center;">
-                        <p style="font-size:12px; color: #aaa;">讲者讲课时长总计</p>
-                        <p style="font-size: 28px; color: #f5a623; font-weight: bold;">{{ speakerTime }} <span style="font-size:14px; color: #aaa;">小时</span></p>
+                    <div>
+                        <div class="grid-container" style="grid-template-columns: 1fr 1fr 1fr 1fr; align-items: center;">
+                            <div class="card" style="background-color: #fffef0; text-align: center;">
+                                <p style="font-size:12px; color: #aaa;">讲者讲课时长总计</p>
+                                <p style="font-size: 28px; color: #f5a623; font-weight: bold;">{{ speakerTime }} <span style="font-size:14px; color: #aaa;">小时</span></p>
+                            </div>
+                            <div class="card" style="background-color: #f0f8ff; text-align: center;">
+                                <p style="font-size:12px; color: #aaa;">会议时长</p>
+                                <p style="font-size: 28px; color: #4a90e2; font-weight: bold;">{{ meetingDuration }} <span style="font-size:14px; color: #aaa;">小时</span></p>
+                            </div>
+                            <div class="card" style="background-color: #f0fff0; text-align: center;">
+                                <p style="font-size:12px; color: #aaa;">参会人次</p>
+                                <p style="font-size: 28px; color: #50e3c2; font-weight: bold;">{{ participantCount }} <span style="font-size:14px; color: #aaa;">人</span></p>
+                            </div>
+                            <div class="card" style="background-color: #e6f7ff; text-align: center;">
+                                <p style="font-size:12px; color: #aaa;">会议计划时长</p>
+                                <p style="font-size: 28px; color: #1890ff; font-weight: bold;">{{ plannedMeetingDuration }} <span style="font-size:14px; color: #aaa;">小时</span></p>
+                            </div>
+                        </div>
+                        <div class="grid-container" style="grid-template-columns: 1fr 1fr; margin-top: 20px;">
+                            <div class="card">
+                                <h3 style="text-align:center; font-size:14px; color: #555; margin-bottom:10px;">参会人时长占比</h3>
+                                <div><canvas id="participantDurationChart"></canvas></div>
+                            </div>
+                            <div class="card">
+                                <h3 style="text-align:center; font-size:14px; color: #555; margin-bottom:10px;">参会人级别占比</h3>
+                                <div><canvas id="participantLevelChart"></canvas></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card" style="background-color: #f0f8ff; text-align: center;">
-                        <p style="font-size:12px; color: #aaa;">会议时长</p>
-                        <p style="font-size: 28px; color: #4a90e2; font-weight: bold;">{{ meetingDuration }} <span style="font-size:14px; color: #aaa;">小时</span></p>
-                    </div>
-                    <div class="card" style="background-color: #f0fff0; text-align: center;">
-                        <p style="font-size:12px; color: #aaa;">参会人次</p>
-                        <p style="font-size: 28px; color: #50e3c2; font-weight: bold;">{{ participantCount }} <span style="font-size:14px; color: #aaa;">人</span></p>
-                    </div>
+                    
+                    
                 </div>
-
                 <div class="grid-container" style="grid-template-columns: 1fr 1fr; margin-top: 20px;">
                     <div class="card">
                         <h3><span style="color: #28a745;">✔</span> 3大亮点</h3>
@@ -319,7 +344,7 @@
                          class="speaker-card" 
                          :class="{ active: activeSpeaker === speaker.id }"
                          @click="activeSpeaker = speaker.id">
-                        {{ speaker.name }} ({{ speaker.duration }})
+                        {{ speaker.name }} ({{ speaker.duration }})  <span class="speaker-level">{{speaker.level}} 级</span> 
                         <div v-if="activeSpeaker === speaker.id" style="font-size: 12px; color: #007bff; margin-top: 5px;">{{ speaker.focus }}</div>
                     </div>
                 </div>
@@ -356,6 +381,23 @@
             el: '#app',
             data: {
                 meetingTitle: '8.8 安徽癌痛研讨会',
+                plannedMeetingDuration: 1.5, // New data for planned duration
+            participantDurationData: {
+                labels: ['0-20分钟', '20-40分钟', '40-60分钟', '60-90分钟'],
+                datasets: [{
+                    label: '参会人时长分布',
+                    data: [2, 4, 4, 2],
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+                }]
+            },
+            participantLevelData: {
+                labels: ['A级', 'B级', 'C级', 'D级'],
+                datasets: [{
+                    label: '参会人级别分布',
+                    data: [1, 1, 4, 6],
+                    backgroundColor: ['#FF9F40', '#FFCD56', '#4BC0C0', '#36A2EB'],
+                }]
+            },
                 tabs: [
                     { id: 'info', name: '基本信息' },
                     { id: 'analysis', name: '智能分析' },
@@ -371,7 +413,7 @@
                     '<strong>技术问题复盘：</strong>吴中华老师分享时遇到的技术问题（课件无法共享/播放），提示未来需要做好会前技术演练和备用方案。'
                 ],
                 meetingPacing: {
-                totalDuration: '~75分钟',
+                
                 timeline: [
                     { time: '开场介绍 (0-2min)', event: '蔡晶介绍会议背景与讲者。' },
                     { time: '讲座一 (2-32min)', event: '夏逸文教授分享（包含技术调试时间）。' },
@@ -387,7 +429,7 @@
 <br><br>一个重要的讨论焦点是阿片类药物的滴定策略。会议通过病例分享和讨论，有力地论证了采取积极的12小时剂量调整方案的安全性和有效性，这种方法能更迅速地达到疼痛控制目标，直接回应并试图消除临床实践中对于更保守的24小时调整方案的依赖和顾虑。此外，研讨会提供了超越纯粹镇痛的整体视角，强调了预判、预防和管理阿片类药物相关不良事件（尤其是便秘、尿潴留和嗜睡）的至关重要性，并给出了具体的处理方案。会议还展示了疼痛管理如何与靶向治疗（RET抑制剂）和骨改良剂（地舒单抗）等先进抗肿瘤疗法相辅相成，凸显了其作为保障患者能够耐受并获益于现代肿瘤治疗的关键支持作用。最后，所有讲者都贯穿了人文关怀的理念，强调结合心理支持和患者教育，以全面提升患者的生活质量和维护其生命尊严。`,
                 speakerTime: '1',
                 meetingDuration: '1.18',
-                participantCount: '4',
+                participantCount: '12',
                 customerInsight: {
                 identifiedQuestionsCount: 2,
                 discussionPoints: [
@@ -431,6 +473,7 @@
                     {
                         id: 'li',
                         name: '夏逸文',
+                        level:"B",
                         duration: '29分钟',
                         focus: '"癌痛规范化滴定病例分享"',
                         keywords: ["高度契合"],
@@ -440,6 +483,7 @@
                     {
                         id: 'wu',
                         name: '景齐骏',
+                        level:"C",
                         duration: '15分钟',
                         focus: '"癌痛全程管理病例分享"',
                         keywords: ["部分契合"],
@@ -450,6 +494,7 @@
                         id: 'ding',
                         name: '吴中华',
                         duration: '18分钟',
+                        level:"A",
                         focus: '"癌痛规范化管理病例分享"',
                         keywords: ["高度契合"],
                         keyMessage:"<strong>软组织肉瘤超大剂量镇痛病例。</strong>吴医生的分享提供了一个冷静而务实的视角，聚焦于一位患有难治性疼痛的进行性肉瘤患者的长期管理，深刻探讨了阿片类药物耐受性和累积毒性这两大挑战。",
@@ -488,8 +533,58 @@
             methods: {
                 createQuery() {
                     window.alert('操作: 将该问题发送至医学部接口，并生成邮件草稿给代表确认。')
-                }
+                },
+                renderParticipantDurationChart() {
+                const ctx = document.getElementById('participantDurationChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: this.participantDurationData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(tooltipItem) {
+                                        return tooltipItem.label + ': ' + tooltipItem.raw + '人';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+            renderParticipantLevelChart() {
+                const ctx = document.getElementById('participantLevelChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: this.participantLevelData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(tooltipItem) {
+                                        return tooltipItem.label + ': ' + tooltipItem.raw + '人';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
             }
+            },
+            mounted() {
+            this.renderParticipantDurationChart();
+            this.renderParticipantLevelChart();
+        },
         });
     </script>
 </body>
