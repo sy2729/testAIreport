@@ -134,7 +134,7 @@
             font-size: 12px;
         }
         .keyword-tag.half{
-            background-color: rgb(244, 169, 29);
+            background-color: rgb(249, 220, 166);
             color: rgb(158, 107, 11);
         }
         .speaker-card {
@@ -147,6 +147,17 @@
         .speaker-card.active {
             border-color: #007bff;
             box-shadow: 0 0 5px rgba(0,123,255,0.5);
+        }
+
+        .timeline-div::before{
+            content: "";
+            position: absolute;
+            left: 58px;
+            transform: translateY(-50%);
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #ff8c00;
         }
     </style>
 </head>
@@ -176,7 +187,7 @@
                 <div class="grid-container" style="grid-template-columns: 4fr 1fr 1fr 1fr; align-items: center;">
                     <div class="card">
                         <h3>会议摘要</h3>
-                        <p v-html = meetingSummary></p>
+                        <p v-html = meetingSummary style="font-size: 16px;"></p>
                     </div>
                     <div class="card" style="background-color: #fffef0; text-align: center;">
                         <p style="font-size:12px; color: #aaa;">讲者讲课时长总计</p>
@@ -191,15 +202,87 @@
                         <p style="font-size: 28px; color: #50e3c2; font-weight: bold;">{{ participantCount }} <span style="font-size:14px; color: #aaa;">人</span></p>
                     </div>
                 </div>
+
+                <div class="grid-container" style="grid-template-columns: 1fr 1fr; margin-top: 20px;">
+                    <div class="card">
+                        <h3><span style="color: #28a745;">✔</span> 3大亮点</h3>
+                        <ul>
+                            <li v-for="strength in topStrengths" :key="strength" v-html="strength"></li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3><span style="color: #ffc107;">💡</span> 3大机会点 </h3>
+                        <ul>
+                            <li v-for="opportunity in topOpportunities" :key="opportunity" v-html="opportunity"></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h3>会议节奏与动态把控</h3>
+                    <div class="card">
+                        <h4>会议流程可视化:</h4>
+                        <ul style="list-style: none; padding-left: 0;">
+                            <li v-for="(item, index) in meetingPacing.timeline" :key="index" style="margin-bottom: 10px; display: flex; align-items: flex-start;">
+                                <span style="color: #007bff; margin-right: 10px; font-size: 1.5em; line-height: 1; display: none;">&#8226;</span>
+                                <div style="border-left: 2px solid #ff9d1d; padding-left: 10px; margin-left: -12px; padding-bottom: 5px;" class="timeline-div">
+                                    <span v-if="index < meetingPacing.timeline.length -1 && meetingPacing.timeline.length > 1" style="display: block; height: 20px;"></span>
+                                     {{ item.time }}: {{ item.event }}
+                                </div>
+                            </li>
+                        </ul>
+                        <div v-if="meetingPacing.aiInsight" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+                            <h5 style="margin-bottom: 5px;">AI洞察:</h5>
+                            <p>{{ meetingPacing.aiInsight }}</p>
+                        </div>
+                    </div>
+                </div>
+                
             </div>
 
             <div class="section">
-                <h2><span style="color: #7b68ee;">✦</span> 参会人分析</h2>
-                <div class="grid-container" style="grid-template-columns: 1fr 1fr 1fr;">
+                <h2><span style="color: #7b68ee;">✦</span> 会议沟通 & 互动分析</h2>
+                <div class="grid-container" style="grid-template-columns: 1fr 1fr;">
                     <div class="card">
-                        <h3>参会人词云:</h3>
+                        <h3>会议词云:</h3>
                         <img style="width: 100%;" src="./wordcount.jpg" alt="">
                     </div>
+
+                    <div class="card">
+                        <h3>客户洞察与互动质量</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span>识别出的关键问询:</span>
+                            <span style="font-size: 1.2em; font-weight: bold; color: #ff9d00;">{{ customerInsight.identifiedQuestionsCount }}个</span>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                            <thead>
+                                <tr style="background-color: #f8f9fa;">
+                                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #dee2e6;">议题</th>
+                                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #dee2e6;">发起/参与者</th>
+                                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #dee2e6;">洞察</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(item, index) in customerInsight.discussionPoints" :key="index">
+                                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ item.topic }}</td>
+                                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ item.participants }}</td>
+                                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ item.insight }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="background-color: #fff9e6; padding: 15px; border-radius: 4px;">
+                            <h4 style="margin-top: 0; margin-bottom: 10px;" >待处理的医学问询</h4>
+                            <p style="font-size: 0.9em;"><strong>来源:</strong> {{ customerInsight.pendingInquiry.source }}</p>
+                            <p style="font-size: 0.9em;"><strong>AI识别的问题原文:</strong> "{{ customerInsight.pendingInquiry.query }}"</p>
+                            <button style="background-color: #f0ad4e; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px;" @click="createQuery">
+                                确认并生成医学问询草稿
+                            </button>
+                        </div>
+                    </div>
+                    <!-- <div class="card">
+                        <h3>客户洞察与互动质量:</h3>
+                        <img style="width: 100%;" src="./wordcount.jpg" alt="">
+                    </div> -->
                     <!-- <div class="card">
                         <h3>参会时长占比:</h3>
                         <div class="chart-placeholder">环形图</div>
@@ -230,7 +313,7 @@
             </div>
 
             <div class="section">
-                <h2><span style="color: #7b68ee;">✦</span> 讲者内容契合度分析</h2>
+                <h2><span style="color: #7b68ee;">✦</span> 信息传递有效性分析（演讲内容与议程契合度）</h2>
                 <div style="display: flex; margin-bottom: 15px;">
                     <div v-for="speaker in speakers" :key="speaker.name" 
                          class="speaker-card" 
@@ -245,7 +328,7 @@
                     <span v-for="keyword in activeSpeakerData.keywords" :key="keyword" :class = "keyword === '部分契合'?'keyword-tag half':'keyword-tag'">{{ keyword }}</span>
                     
                     <h3>核心主题</h3>
-                    <p >{{ activeSpeakerData.keyMessage }}</p>
+                    <p v-html="activeSpeakerData.keyMessage"></p>
                     <h3>契合度与偏差分析:</h3>
                     <p v-for="fb in activeSpeakerData.feedback" :key="fb" >{{ fb }}</p>
                 </div>
@@ -256,6 +339,14 @@
                 <p v-for="group in conclusion" :key="group.title">
                     <strong>{{ group.title }}:</strong> {{ group.description }}
                 </p>
+            </div>
+            <div class="section">
+                <h2><span style="color: #7b68ee;">✦</span>会议待办事项</h2>
+                <ul>
+                    <li>跟进处理景老师病例中患者新增的肋骨转移疼痛问题。</li>
+                    <li>了解夏教授在滴定过程中如何根据患者反馈调整剂量。</li>
+                    <li>下周继续参加病例征集会议。</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -269,6 +360,27 @@
                     { id: 'info', name: '基本信息' },
                     { id: 'analysis', name: '智能分析' },
                 ],
+                topStrengths: [
+                    `<strong>病例多样且典型：</strong>会议分享了三例不同情况下的癌痛病例（肺癌、肉瘤），覆盖了滴定、不良反应处理等多个临床场景。`,
+                    '<strong>理念宣贯深入：</strong>夏教授从“死亡幸福指数”和“中枢敏化”等角度，深刻阐述了及早镇痛的理念，极具启发性。',
+                    '<strong>滴定策略探讨实用：</strong>主持人与景齐峻老师关于12小时 vs 24小时剂量调整的讨论，直面临床实践中的关键决策点，非常有价值。'
+                ],
+                topOpportunities: [
+                    '<strong>生成超大剂量用药的医学问询：</strong>吴中华老师分享的病例中，患者奥士康定®用量高达280mg Q12H，这是一个关于超大剂量安全性和有效性的极佳医学问询点。',
+                    '<strong>固化滴定策略流程：</strong>将夏教授和吴老师病例中的剂量调整过程，制作成标准化的“滴定路径卡”，用于内部培训。',
+                    '<strong>技术问题复盘：</strong>吴中华老师分享时遇到的技术问题（课件无法共享/播放），提示未来需要做好会前技术演练和备用方案。'
+                ],
+                meetingPacing: {
+                totalDuration: '~75分钟',
+                timeline: [
+                    { time: '开场介绍 (0-2min)', event: '蔡晶介绍会议背景与讲者。' },
+                    { time: '讲座一 (2-32min)', event: '夏逸文教授分享（包含技术调试时间）。' },
+                    { time: '讲座二 (32-46min)', event: '景齐峻老师分享及简短问答。' },
+                    { time: '讲座三 (50-72min)', event: '吴中华老师分享（包含技术调试时间）。' },
+                    { time: '会议总结 (73-75min)', event: '蔡晶总结并致谢。' }
+                ],
+                aiInsight: '会议结构为典型的串行病例分享。吴中华老师分享前的技术中断（约4分钟）对会议流畅性有一定影响。讲者间的互动较少，主要为主持人与单一讲者的问答。'
+            },
                 activeTab: 'analysis',
                 meetingSummary: `本次学术交流强调了将规范化、个体化和前瞻性的癌痛管理作为肿瘤综合治疗不可或缺一部分的紧迫性。会议的一个核心主线是，使用NRS等标准化工具进行精准的疼痛评估，是所有后续治疗决策的基石。讲者们共同倡导一种由指南驱动的治疗路径，主要遵循WHO三阶梯止痛原则，并强调对于中重度疼痛，阿片类药物是治疗的核心。其中，使用奥施康定等长效阿片类药物控制背景痛，并联用即释剂型处理爆发痛，被一致认为是实现有效疼痛管理的基础策略。
 
@@ -276,6 +388,25 @@
                 speakerTime: '1',
                 meetingDuration: '1.18',
                 participantCount: '4',
+                customerInsight: {
+                identifiedQuestionsCount: 2,
+                discussionPoints: [
+                    {
+                        topic: '滴定方案选择 (缓释 vs 即释)',
+                        participants: '蔡晶, 景齐峻',
+                        insight: '景老师明确偏好以缓释剂型为背景进行滴定，因其方便、患者接受度高。'
+                    },
+                    {
+                        topic: '剂量调整周期 (12h vs 24h)',
+                        participants: '蔡晶, 景齐峻',
+                        insight: '揭示了临床医生在指南推荐与患者实际需求间的权衡，部分医生对12h调量存有顾虑。'
+                    }
+                ],
+                pendingInquiry: {
+                    source: '吴中华老师病例',
+                    query: '对于奥士康定®日剂量超过560mg的患者，其安全性、有效性以及不良反应（特别是神经毒性、**潴留）的管理策略和临床证据有哪些？是否存在更高剂量的用药经验？'
+                }
+            },
                 participantDurationRatio: [
                     { label: '2小时', value: '●' },
                     { label: '1.5-2小时', value: '●' },
@@ -303,7 +434,7 @@
                         duration: '29分钟',
                         focus: '"癌痛规范化滴定病例分享"',
                         keywords: ["高度契合"],
-                        keyMessage:"夏医生的分享为整个会议的癌痛管理讨论奠定了理论和实践基础。他不仅从临床角度，更从人文关怀的层面构建了讨论的框架，通过引用中国在“死亡幸福指数”排名偏后的数据 ，深刻地指出了提供有尊严的临终关怀的社会意义。",
+                        keyMessage:"<strong>及早镇痛理念与背景。</strong>夏医生的分享为整个会议的癌痛管理讨论奠定了理论和实践基础。他不仅从临床角度，更从人文关怀的层面构建了讨论的框架，通过引用中国在“死亡幸福指数”排名偏后的数据 ，深刻地指出了提供有尊严的临终关怀的社会意义。",
                         feedback: ["讲者的理论阐述和病例分享完全围绕“规范化滴定”这一核心主题展开。内容具有很强的基础性和指导性，与议题标题高度匹配。"]
                     },
                     {
@@ -312,7 +443,7 @@
                         duration: '15分钟',
                         focus: '"癌痛全程管理病例分享"',
                         keywords: ["部分契合"],
-                        keyMessage:"景医生的分享是本次会议的科学亮点，他将疼痛管理从一个独立的对症治疗，提升到了一个支持和保障前沿、多模式肿瘤治疗得以实施的关键支柱的高度。",
+                        keyMessage:"<strong>肺癌伴多发转移病例。</strong>景医生的分享是本次会议的科学亮点，他将疼痛管理从一个独立的对症治疗，提升到了一个支持和保障前沿、多模式肿瘤治疗得以实施的关键支柱的高度。",
                         feedback: ["显著且有价值的延伸。 尽管病例确实覆盖了患者的“全程”治疗，但“全程管理”这一标题过于笼统，未能体现分享内容的真正亮点。实际的焦点在于疼痛管理如何与前沿的、多模式的肿瘤治疗策略（靶向、放疗、骨改良剂）相整合。这种延伸是合理且极具价值的，它将讨论的层次从基础的疼痛管理提升到了其在现代精准肿瘤学中的关键支持作用。"]
                     },
                     {
@@ -321,7 +452,7 @@
                         duration: '18分钟',
                         focus: '"癌痛规范化管理病例分享"',
                         keywords: ["高度契合"],
-                        keyMessage:"吴医生的分享提供了一个冷静而务实的视角，聚焦于一位患有难治性疼痛的进行性肉瘤患者的长期管理，深刻探讨了阿片类药物耐受性和累积毒性这两大挑战。",
+                        keyMessage:"<strong>软组织肉瘤超大剂量镇痛病例。</strong>吴医生的分享提供了一个冷静而务实的视角，聚焦于一位患有难治性疼痛的进行性肉瘤患者的长期管理，深刻探讨了阿片类药物耐受性和累积毒性这两大挑战。",
                         feedback: ["对特定领域的深度挖掘。 该分享是对“规范化管理”在极具挑战性的长期姑息治疗场景中的一次生动实践展示。它完美地阐释了在真实世界中管理药物耐受性和不良反应的复杂性，这些都是规范化管理的核心组成部分。"]
                     }
                 ],
@@ -352,6 +483,11 @@
             computed: {
                 activeSpeakerData() {
                     return this.speakers.find(s => s.id === this.activeSpeaker);
+                }
+            },
+            methods: {
+                createQuery() {
+                    window.alert('操作: 将该问题发送至医学部接口，并生成邮件草稿给代表确认。')
                 }
             }
         });
