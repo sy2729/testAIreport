@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>会议分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin: 0;
+        }
+        .status-bar {
+            display: flex;
+            align-items: center;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-left: 30px;
+            font-size: 14px;
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 2px solid;
+        }
+        .status-dot.active {
+            background-color: #4CAF50;
+            border-color: #4CAF50;
+        }
+        .status-dot.inactive {
+            background-color: #fff;
+            border-color: #ccc;
+        }
+        .tabs {
+            margin-bottom: 20px;
+        }
+        .tabs button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            border: none;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .tabs button.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #fdfdfd;
+            border: 1px solid #eee;
+            border-radius: 6px;
+        }
+        .section h2 {
+            font-size: 18px;
+            color: #34495e;
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .card h3 {
+            font-size: 16px;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .card p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 5px;
+        }
+        .chart-placeholder {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px auto;
+            font-size: 12px;
+            color: #777;
+        }
+        .keyword-tag {
+            display: inline-block;
+            background-color: #e7f3ff;
+            color: #007bff;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        .keyword-tag.half{
+            background-color: rgb(249, 220, 166);
+            color: rgb(158, 107, 11);
+        }
+        .speaker-card {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+            text-align: center;
+        }
+        .speaker-card.active {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.5);
+        }
+
+        .timeline-div::before{
+            content: "";
+            position: absolute;
+            transform: translateX(-128%) translateY(-50%);
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #ff8c00;
+        }
+        .speaker-level {
+            font-weight: bold;
+            color: orange;
+            font-size: 1.1em;
+        }
+        .speaker-level {
+            font-weight: bold;
+            color: orange;
+            font-size: 1.1em;
+        }
+        .evidence-container {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-top: 1px dashed #eee;
+        }
+        .evidence-text {
+            font-style: italic;
+            color: #555;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        .toggle-evidence-btn {
+            background-color: transparent;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            font-size: 0.85em;
+            padding: 2px 5px;
+            text-decoration: underline;
+        }
+        .toggle-evidence-btn:hover {
+            color: #0056b3;
+        }
+        
+        .upload {
+            position: fixed;
+            right: 20px; /* 调整位置，使其在右侧可见 */
+            bottom: 20px; /* 调整位置，使其在底部可见 */
+            width: 120px; /* 调整宽度为长方形 */
+            height: 50px; /* 调整高度为长方形 */
+            background-color: #007bff;
+            color: white;
+            border-radius: 10px; /* 设置圆角 */
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out; /* 平滑过渡效果 */
+            z-index: 1000;
+        }
+        .upload:hover {
+            transform: scale(1.1); /* 悬浮时放大 */
+            box-shadow: 0px 0px 15px rgba(0,0,0,0.3);
+        }
+        .upload svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+        #fileUploadInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+
+        <div v-if="activeTab === 'info'">
+            <div class="section">
+                <h2>基本信息</h2>
+                <p>这里显示会议的基本信息内容...</p>
+            </div>
+        </div>
+
+        <p>{{analysis}}</p>
+
+        <div v-if="activeTab === 'analysis'">
+            
+            <div class="result" v-if="analysis">
+                <div  class="section">
+                    <h2><span style="color: #7b68ee;">✦</span> 会议效果记分卡</h2>
+                    <div class="grid-container" style="grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                        <div v-for="item in meetingScorecard" :key="item.title" class="card" style="text-align: center; padding: 20px;">
+                            <img :src="item.icon" alt="" style="width: 40px; height: 40px; margin-bottom: 10px;">
+                            <p style="font-size: 0.9em; color: #555; margin-bottom: 5px;">{{ item.title }}</p>
+                            <p style="font-size: 1.8em; font-weight: bold; color: #4CAF50;">{{ item.score }}</p>
+                        </div>
+                    </div>
+                </div>
+
+            
+                <div class="section">
+                    <h2><span style="color: #7b68ee;">✦</span> 会议待办事项</h2>
+                    <div v-for="(item, index) in actionSuggestions" :key="index" style="margin-bottom: 15px; display: flex; align-items: flex-start;">
+                        <input type="checkbox" :id="'action-' + index" v-model="item.selected" style="margin-right: 10px; margin-top: 4px; width:18px; height:18px; accent-color: #fd8d32;">
+                        <label :for="'action-' + index" style="font-size: 0.95em; line-height: 1.6;">{{ item.text }}</label>
+                    </div>
+                    <button @click="createTasks" style="background-color: #f18b33; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 1em; margin-top: 10px;">
+                        一键创建任务
+                    </button>
+                    
+                </div>
+                <div class="section">
+                    <h2><span style="color: #7b68ee;">✦</span> 会议总览</h2>
+                    <div class="grid-container" style="grid-template-columns: 2fr 1fr; align-items: center;">
+                        <div class="card">
+                            <h3>会议摘要</h3>
+                            <p style="font-size: 16px;">{{ meetingSummary }}</p>
+                        </div>
+                        <div>
+                            <div class="grid-container" style="grid-template-columns: 1fr 1fr 1fr 1fr; align-items: center;">
+                                <div class="card" style="background-color: #fffef0; text-align: center;">
+                                    <p style="font-size:12px; color: #aaa;">讲者讲课时长总计</p>
+                                    <p style="font-size: 28px; color: #f5a623; font-weight: bold;">{{ speakerTime }} <span style="font-size:14px; color: #aaa;">小时</span></p>
+                                </div>
+                                <div class="card" style="background-color: #f0f8ff; text-align: center;">
+                                    <p style="font-size:12px; color: #aaa;">会议时长</p>
+                                    <p style="font-size: 28px; color: #4a90e2; font-weight: bold;">{{ meetingDuration }} <span style="font-size:14px; color: #aaa;">小时</span></p>
+                                </div>
+                                <div class="card" style="background-color: #f0fff0; text-align: center;">
+                                    <p style="font-size:12px; color: #aaa;">参会人次</p>
+                                    <p style="font-size: 28px; color: #50e3c2; font-weight: bold;">{{ participantCount }} <span style="font-size:14px; color: #aaa;">人</span></p>
+                                </div>
+                                <div class="card" style="background-color: #e6f7ff; text-align: center;">
+                                    <p style="font-size:12px; color: #aaa;">会议计划时长</p>
+                                    <p style="font-size: 28px; color: #1890ff; font-weight: bold;">{{ plannedMeetingDuration }} <span style="font-size:14px; color: #aaa;">小时</span></p>
+                                </div>
+                            </div>
+                            <div class="grid-container" style="grid-template-columns: 1fr 1fr; margin-top: 20px;">
+                                <div class="card">
+                                    <h3 style="text-align:center; font-size:14px; color: #555; margin-bottom:10px;">参会人时长占比</h3>
+                                    <div><canvas id="participantDurationChart"></canvas></div>
+                                </div>
+                                <div class="card">
+                                    <h3 style="text-align:center; font-size:14px; color: #555; margin-bottom:10px;">参会人级别占比</h3>
+                                    <div><canvas id="participantLevelChart"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        
+                    </div>
+                    <div class="grid-container" style="grid-template-columns: 1fr 1fr; margin-top: 20px;">
+                        <div class="card">
+                            <h3><span style="color: #28a745;">✔</span> 3大亮点</h3>
+                            <ul>
+                                <li v-for="strength in topStrengths" :key="strength" v-html="strength"></li>
+                            </ul>
+                        </div>
+                        <div class="card">
+                            <h3><span style="color: #ffc107;">💡</span> 3大机会点 </h3>
+                            <ul>
+                                <li v-for="opportunity in topOpportunities" :key="opportunity" v-html="opportunity"></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <h3>会议节奏与动态把控</h3>
+                        
+                        <div class="card" style="margin-bottom: 15px;">
+                            <h4>讲听比: <span style="float: right; font-weight: bold; color: #007bff;">{{ meetingPacing.talkListenRatio.talk }}% / {{ meetingPacing.talkListenRatio.listen }}%</span></h4>
+                            <div style="background-color: #e9ecef; border-radius: .25rem; display: flex; height: 20px; margin-top:10px;">
+                                <div :style="{ width: meetingPacing.talkListenRatio.talk + '%', backgroundColor: '#007bff' }" role="progressbar" aria-valuenow="meetingPacing.talkListenRatio.talk" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div :style="{ width: meetingPacing.talkListenRatio.listen + '%', backgroundColor: '#86c97c' }" role="progressbar" aria-valuenow="meetingPacing.talkListenRatio.listen" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8em; color: #555; margin-top: 5px;">
+                                <span>讲座与主持</span>
+                                <span>开放式讨论</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h4>会议流程可视化:</h4>
+                            <ul style="list-style: none; padding-left: 0;">
+                                <li v-for="(item, index) in meetingPacing.timeline" :key="index" style="margin-bottom: 10px; display: flex; align-items: flex-start;">
+                                    <span style="color: #007bff; margin-right: 10px; font-size: 1.5em; line-height: 1; display: none;">&#8226;</span>
+                                    <div style="border-left: 2px solid #ff9d1d; padding-left: 10px; margin-left: -12px; padding-bottom: 5px;" class="timeline-div">
+                                        <span v-if="index < meetingPacing.timeline.length -1 && meetingPacing.timeline.length > 1" style="display: block; height: 20px;"></span>
+                                        {{ item.time }}: {{ item.event }}
+                                    </div>
+                                </li>
+                            </ul>
+                            
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <div class="section">
+                    <h2><span style="color: #7b68ee;">✦</span> 会议沟通 & 互动分析</h2>
+                    <div class="grid-container" style="grid-template-columns: 1fr 1fr;">
+                        <div class="card">
+                            <h3>会议词云:</h3>
+                            <img style="width: 100%;" src="./wordcount.jpg" alt="">
+                        </div>
+
+                        <div class="card">
+                            <h3>客户洞察与互动质量</h3>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span>识别出的关键问询:</span>
+                                <span style="font-size: 1.2em; font-weight: bold; color: #ff9d00;">{{ customerInsight.identifiedQuestionsCount }}个</span>
+                            </div>
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                                <thead>
+                                    <tr style="background-color: #f8f9fa;">
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #dee2e6;">议题</th>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #dee2e6;">发起/参与者</th>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #dee2e6;">洞察</th>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #dee2e6;">原文佐证</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template v-for="(item, index) in customerInsight.discussionPoints">
+                                        <tr :key="index">
+                                            <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ item.topic }}</td>
+                                            <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ item.participants }}</td>
+                                            <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ item.insight }}</td>
+                                            <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                                                <button @click="toggleEvidence(item)" class="toggle-evidence-btn">
+                                                    {{ item.showEvidence ? '隐藏' : '展开' }}佐证
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="item.showEvidence" :key="index + '-evidence'" class="evidence-row">
+                                            <td colspan="4" class="evidence-container">
+                                                <p class="evidence-text">{{ item.evidence }}</p>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                            <div style="background-color: #fff9e6; padding: 15px; border-radius: 4px;">
+                                <h4 style="margin-top: 0; margin-bottom: 10px;" >待处理的医学问询</h4>
+                                <p style="font-size: 0.9em;"><strong>来源:</strong> {{ customerInsight.pendingInquiry.source }}</p>
+                                <p style="font-size: 0.9em;"><strong>AI识别的问题原文:</strong> "{{ customerInsight.pendingInquiry.query }}"</p>
+                                <button style="background-color: #f0ad4e; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px;" @click="createQuery">
+                                    确认并生成医学问询草稿
+                                </button>
+                            </div>
+                        </div>
+                        <!-- <div class="card">
+                            <h3>客户洞察与互动质量:</h3>
+                            <img style="width: 100%;" src="./wordcount.jpg" alt="">
+                        </div> -->
+                        <!-- <div class="card">
+                            <h3>参会时长占比:</h3>
+                            <div class="chart-placeholder">环形图</div>
+                            <ul>
+                                <li v-for="item in participantDurationRatio" :key="item.label">{{ item.label }}: {{ item.value }}</li>
+                            </ul>
+                        </div> -->
+                        <!-- <div class="card">
+                            <h3>参会人画像:</h3>
+                            <div>
+                                <span style="background-color: #ffe9d2; color: #fa8c16; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-right: 5px;">临床医生</span> 
+                                <span style="background-color: #e6f7ff; color: #1890ff; padding: 3px 8px; border-radius: 4px; font-size: 12px;">研究人员</span>
+                            </div>
+                            <h4>关注点:</h4>
+                            <ul>
+                                <li v-for="point in participantProfile.concerns" :key="point">{{ point }}</li>
+                            </ul>
+                            <h4>参会目的:</h4>
+                            <ul>
+                                <li v-for="goal in participantProfile.goals" :key="goal">{{ goal }}</li>
+                            </ul>
+                            <h4>行为偏好:</h4>
+                            <ul>
+                                <li v-for="pref in participantProfile.preferences" :key="pref">{{ pref }}</li>
+                            </ul>
+                        </div> -->
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2><span style="color: #7b68ee;">✦</span> 信息传递有效性分析（演讲内容与议程契合度）</h2>
+                    <div style="display: flex; margin-bottom: 15px;">
+                        <div v-for="speaker in speakers" :key="speaker.name" 
+                            class="speaker-card" 
+                            :class="{ active: activeSpeaker === speaker.id }"
+                            @click="activeSpeaker = speaker.id">
+                            {{ speaker.name }} ({{ speaker.duration }})  <span class="speaker-level">{{speaker.level}} 级</span> 
+                            <div v-if="activeSpeaker === speaker.id" style="font-size: 12px; color: #007bff; margin-top: 5px;">{{ speaker.focus }}</div>
+                        </div>
+                    </div>
+                    <div v-if="activeSpeakerData">
+                        <h3>评估结论:</h3>
+                        <span v-for="keyword in activeSpeakerData.keywords" :key="keyword" :class = "keyword === '部分契合'?'keyword-tag half':'keyword-tag'">{{ keyword }}</span>
+                        
+                        <h3>核心主题</h3>
+                        <p v-html="activeSpeakerData.keyMessage"></p>
+                        <h3>契合度与偏差分析:</h3>
+                        <p v-for="fb in activeSpeakerData.feedback" :key="fb" >{{ fb }}</p>
+                    </div>
+                </div>
+                <div class="section" v-if="planVsActualData">
+                    <h2><span style="color: #7b68ee;">✦</span>计划与执行差异分析</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                        <span style="font-size: 1.1em;">核心讲者出席率:</span>
+                        <span style="font-size: 1.3em; font-weight: bold; color: #007bff;">{{ planVsActualData.coreSpeakerAttendanceRate }}</span>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background-color: #f8f9fa;">
+                                <th style="text-align: left; padding: 10px; border-bottom: 1px solid #dee2e6; width: 20%;">项目</th>
+                                <th style="text-align: left; padding: 10px; border-bottom: 1px solid #dee2e6; width: 40%;">计划 (Planned)</th>
+                                <th style="text-align: left; padding: 10px; border-bottom: 1px solid #dee2e6; width: 40%;">实际 (Actual)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(item, index) in planVsActualData.comparison" :key="index">
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">{{ item.project }}</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ item.planned }}</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;" :style="{ color: item.actualColor || 'inherit' }">{{ item.actual }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section">
+                    <h2><span style="color: #7b68ee;">✦</span>会议点评与案例启示</h2>
+                    <p v-for="group in conclusion" :key="group.title">
+                        <strong>{{ group.title }}:</strong> {{ group.description }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="upload" onclick="document.getElementById('fileUploadInput').click()" v-if="!analysis">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="none"/><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 4h14v2H5z"/></svg>
+            </div>
+            <!-- <input type="file" id="fileUploadInput"  @change="handleFileUpload"> -->
+            <div style="display: none;">
+                <input type="file"  id="fileUploadInput" @change="handleFileUpload" />
+                <button @click="uploadFile">上传文件</button>
+              </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                analysis: null,
+                meetingScorecard: [
+                    {
+                        title: '信息传递',
+                        score: 0,
+                        icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMyIgc3Ryb2tlPSIjNkM2M0ZGIiBzdHJva2Utd2lkdGg9IjEuNSIvPgo8Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI3IiBzdHJva2U9IiM2QzYzRkYiIHN0cm9rZS13aWR0aD0iMS41Ii8+CjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwLjI1IiBzdHJva2U9IiM2QzYzRkYiIHN0cm9rZS13aWR0aD0iMS41Ii8+Cjwvc3ZnPgo='
+                    },
+                    {
+                        title: '临床共鸣',
+                        score: 0,
+                        icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgMTlWNi4yQzQgNS4wNzk5IDQgNC41MTk4NCA0LjIxNzk5IDQuMDkyMDRDNC40MDkyMyAzLjcxOTYyIDQuNzE5NjIgMy40MDkyMyA1LjA5MjA0IDMuMjE3OTlDNS41MTk4NCAzIDYuMDc5OSAzIDcuMiAzSDE2LjhDMTcuOTIwMSAzIDE4LjQ4MDIgMyAxOC45MDggMy4yMTc5OUMxOS4yODA0IDMuNDA5MjMgMTkuNTkwOCAzLjcxOTYyIDE5Ljc4MjEgNC4wOTIwNEMxOS45OTk5IDQuNTE5ODQgMjAgNS4wNzk5IDIwIDYuMlYxMy44QzIwIDE0LjkyMDEgMjAgMTUuNDgwMiAxOS43ODIxIDE1LjkwOEMxOS41OTA4IDE2LjI4MDQgMTkuMjgwNCAxNi41OTA4IDE4LjkwOCAxNi43ODIxQzE4LjQ4MDIgMTcgMTcuOTIwMSAxNyAxNi44IDE3SDkuNUw0IDE5WiIgc3Ryb2tlPSIjNkM2M0ZGIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo='
+                    },
+                    {
+                        title: '数据强度',
+                        score: 0,
+                        icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTcgMTBMMSAxNi41TDcgMjMiIHN0cm9rZT0iIzZDNjNGRiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8cGF0aCBkPSJNMTcgMTBMMjMgMTYuNUwxNyAyMyIgc3Ryb2tlPSIjNkM2M0ZGIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjxwYXRoIGQ9Ik0xMiA0TDUuNSAxMEgxOC41TDEyIDRaIiBmaWxsPSIjNkM2M0ZGIi8+Cjwvc3ZnPgo='
+                    },
+                    {
+                        title: '讲者影响',
+                        score: 0,
+                        icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSIzIiBzdHJva2U9IiM2QzYzRkYiIHN0cm9rZS13aWR0aD0iMS41Ii8+CjxwYXRoIGQ9Ik0xNyAxMy42NzY1QzE3IDEyLjE5NjcgMTUuODAzMyAxMSAxMiAxMUM4LjE5NjcyIDExIDcgMTIuMTk2NyA3IDEzLjY3NjVWMTVIMTdWMTMuNjc2NVoiIHN0cm9rZT0iIzZDNjNGRiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8cGF0aCBkPSJNOSAxOFYyMUgxNVYxOCIgc3Ryb2tlPSIjNkM2M0ZGIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjwvc3ZnPgo='
+                    }
+                ],
+                meetingTitle: '8.8 安徽癌痛研讨会',
+                plannedMeetingDuration: 1.5, // New data for planned duration
+            participantDurationData: {
+                labels: ['0-20分钟', '20-40分钟', '40-60分钟', '60-90分钟'],
+                datasets: [{
+                    label: '参会人时长分布',
+                    data: [2, 4, 4, 2],
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+                }]
+            },
+            participantLevelData: {
+                labels: ['A级', 'B级', 'C级', 'D级'],
+                datasets: [{
+                    label: '参会人级别分布',
+                    data: [1, 1, 4, 6],
+                    backgroundColor: ['#FF9F40', '#FFCD56', '#4BC0C0', '#36A2EB'],
+                }]
+            },
+                tabs: [
+                    { id: 'info', name: '基本信息' },
+                    { id: 'analysis', name: '智能分析' },
+                ],
+                topStrengths: [
+                    `<strong>病例多样且典型：</strong>会议分享了三例不同情况下的癌痛病例（肺癌、肉瘤），覆盖了滴定、不良反应处理等多个临床场景。`,
+                    '<strong>理念宣贯深入：</strong>夏教授从“死亡幸福指数”和“中枢敏化”等角度，深刻阐述了及早镇痛的理念，极具启发性。',
+                    '<strong>滴定策略探讨实用：</strong>主持人与景峻老师关于12小时 vs 24小时剂量调整的讨论，直面临床实践中的关键决策点，非常有价值。'
+                ],
+                topOpportunities: [
+                    '<strong>生成超大剂量用药的医学问询：</strong>吴华老师分享的病例中，患者的长效阿片类药物用量高达280mg Q12H，这是一个关于超大剂量安全性和有效性的极佳医学问询点。',
+                    '<strong>固化滴定策略流程：</strong>将夏教授和吴老师病例中的剂量调整过程，制作成标准化的“滴定路径卡”，用于内部培训。',
+                    '<strong>技术问题复盘：</strong>吴华老师分享时遇到的技术问题（课件无法共享/播放），提示未来需要做好会前技术演练和备用方案。'
+                ],
+                meetingPacing: {
+                talkListenRatio: { // 新增讲听比数据
+                    talk: 85,
+                    listen: 15
+                },
+                timeline: [
+                    { time: '开场介绍 (0-2min)', event: '蔡晶介绍会议背景与讲者。' },
+                    { time: '讲座一 (2-32min)', event: '夏文教授分享（包含技术调试时间）。' },
+                    { time: '讲座二 (32-46min)', event: '景峻老师分享及简短问答。' },
+                    { time: '讲座三 (50-72min)', event: '吴华老师分享（包含技术调试时间）。' },
+                    { time: '会议总结 (73-75min)', event: '蔡晶总结并致谢。' }
+                ],
+            },
+                activeTab: 'analysis',
+                meetingSummary: null,
+                speakerTime: '1',
+                meetingDuration: '1.18',
+                participantCount: '12',
+                customerInsight: {
+                identifiedQuestionsCount: 2,
+                discussionPoints: [
+                    {
+                        topic: '滴定方案选择 (缓释 vs 即释)',
+                        participants: '蔡晶, 景峻',
+                        insight: '景老师明确偏好以缓释剂型为背景进行滴定，因其方便、患者接受度高。',
+                        evidence: '景峻(00:46:23):参考同这一块,我还是会选选择这个咱们这个枪枪头这个缓释的这这个这个地方案,因为它第一个它。它它好，这个滴滴的话好加量减量,它这个这个非常方便,因为口服的制剂，口服制剂它应用患者接受程度也比较高，毕竟不用每天去针剂去打针，可能呢它对于口服可能接受度更高一点。另外它可以加点一片就是十毫克，它有多种剂型，多种剂型，另外一个对我们最基础的一个十毫克的一个剂型，它的它无论它是滴滴，它的加量减量都比较方便。然后整体的副作用也良好，所以我可能会选择这一块比较多一点。',
+                        showEvidence: false
+                    },
+                    {
+                        topic: '剂量调整周期 (12h vs 24h)',
+                        participants: '蔡晶, 景峻',
+                        insight: '揭示了临床医生在指南推荐与患者实际需求间的权衡，部分医生对12h调量存有顾虑。',
+                        evidence: '景峻(00:48:01):到了。解决爆发痛的药物去应用。对到12 小时到到 12 小时之后呢,可能会针对他的一个反馈,患者的一个反馈进行一个加量或者减量进行一个滴滴，那不会等到 24 小时。如果 24 小时可能时间是有点太长了,我感觉病人可能无法耐受',
+                        showEvidence: false
+                    }
+                ],
+                pendingInquiry: {
+                    source: '吴华老师病例',
+                    query: '对于常见的长效阿片类药物日剂量超过560mg的患者，其安全性、有效性以及不良反应（特别是神经毒性、**潴留）的管理策略和临床证据有哪些？是否存在更高剂量的用药经验？'
+                }
+            },
+                participantDurationRatio: [
+                    { label: '2小时', value: '●' },
+                    { label: '1.5-2小时', value: '●' },
+                    { label: '1-1.5小时', value: '●' },
+                    { label: '0.5-1小时', value: '●' },
+                    { label: '0.5小时以内', value: '●' },
+                ],
+                participantProfile: {
+                    concerns: [
+                        '维我替尼在骨质疏松患者中的疗效',
+                        '药物与钙剂联合使用的效果'
+                    ],
+                    goals: [
+                        '了解药物疗效数据,优化患者治疗方案'
+                    ],
+                    preferences: [
+                        '喜欢真实病例分享和疗效数据分析',
+                        '希望获得明确的处方建议'
+                    ]
+                },
+                speakers: [
+                    {
+                        id: 'li',
+                        name: '夏文',
+                        level:"B",
+                        duration: '29分钟',
+                        focus: '"癌痛规范化滴定病例分享"',
+                        keywords: ["高度契合"],
+                        keyMessage:"<strong>及早镇痛理念与背景。</strong>夏医生的分享为整个会议的癌痛管理讨论奠定了理论和实践基础。他不仅从临床角度，更从人文关怀的层面构建了讨论的框架，通过引用中国在“死亡幸福指数”排名偏后的数据 ，深刻地指出了提供有尊严的临终关怀的社会意义。",
+                        feedback: ["讲者的理论阐述和病例分享完全围绕“规范化滴定”这一核心主题展开。内容具有很强的基础性和指导性，与议题标题高度匹配。"]
+                    },
+                    {
+                        id: 'wu',
+                        name: '景峻',
+                        level:"C",
+                        duration: '15分钟',
+                        focus: '"癌痛全程管理病例分享"',
+                        keywords: ["部分契合"],
+                        keyMessage:"<strong>肺癌伴多发转移病例。</strong>景医生的分享是本次会议的科学亮点，他将疼痛管理从一个独立的对症治疗，提升到了一个支持和保障前沿、多模式肿瘤治疗得以实施的关键支柱的高度。",
+                        feedback: ["显著且有价值的延伸。 尽管病例确实覆盖了患者的“全程”治疗，但“全程管理”这一标题过于笼统，未能体现分享内容的真正亮点。实际的焦点在于疼痛管理如何与前沿的、多模式的肿瘤治疗策略（靶向、放疗、骨改良剂）相整合。这种延伸是合理且极具价值的，它将讨论的层次从基础的疼痛管理提升到了其在现代精准肿瘤学中的关键支持作用。"]
+                    },
+                    {
+                        id: 'ding',
+                        name: '吴华',
+                        duration: '18分钟',
+                        level:"A",
+                        focus: '"癌痛规范化管理病例分享"',
+                        keywords: ["高度契合"],
+                        keyMessage:"<strong>软组织肉瘤超大剂量镇痛病例。</strong>吴医生的分享提供了一个冷静而务实的视角，聚焦于一位患有难治性疼痛的进行性肉瘤患者的长期管理，深刻探讨了阿片类药物耐受性和累积毒性这两大挑战。",
+                        feedback: ["对特定领域的深度挖掘。 该分享是对“规范化管理”在极具挑战性的长期姑息治疗场景中的一次生动实践展示。它完美地阐释了在真实世界中管理药物耐受性和不良反应的复杂性，这些都是规范化管理的核心组成部分。"]
+                    }
+                ],
+                conclusion:[
+                    {
+                        "title":"三段式病例叙事的教育力量",
+                        "description":"本次会议的结构，无论是精心设计还是偶然形成，都极为成功。从一个基础的起始滴定病例（夏文），到一个整合性的现代肿瘤学病例（景峻），再到一个极具挑战性的长期姑息治疗病例（吴华），这种递进式的结构提供了一个全面而引人入胜的癌痛管理叙事。该结构向听众展示了规范化疼痛管理在患者整个疾病旅程中的普适性和必要性。战略启示： 这种“基础-进阶-专家”的病例叙事结构，是一个非常高效的医学教育模板，值得在未来的学术活动中复制和推广。"
+                    },
+                    {
+                        "title":"填补“滴定恐惧”的认知差距",
+                        "description":"由主持人蔡晶发起的问答环节 ，敏锐地揭示了一个普遍存在的临床实践差距：临床医生对于实施12小时快速阿片类药物剂量调整方案普遍存在顾虑和恐惧。景峻医生对此方案充满信心的认可和推荐，为在场听众提供了强有力的同伴教育。"
+                    },
+                    {
+                        "title":"战略启示",
+                        "description":" 这明确了一个医学教育的机遇点。申办方可以开发针对性的医学教育项目（如专题研讨会、专家共识文章、小范围病例讨论会），专注于建立医生在快速阿片类药物滴定方面的信心，从而改善临床实践，使患者更快获益。"
+                    },
+                    {
+                        "title":"精准医疗时代的产品定位",
+                        "description":"景峻医生的病例分享具有关键的战略意义。它清晰地表明，像长效阿片类药物这样的“传统”支持治疗药物，非但没有被现代疗法所取代，反而成为了这些前沿疗法得以成功实施的关键赋能者。战略启示： 市场和医学信息的传递，应将产品定位为不仅仅是镇痛药，更是创新疗法的关键合作伙伴，它通过保障患者的生活质量和治疗耐受性，使患者能够最大程度地从靶向治疗、免疫治疗等前沿科技中获益。"
+                    },
+                    {
+                        "title":"真实世界证据的信誉价值",
+                        "description":"吴华医生对于管理超大剂量和棘手不良反应的坦诚分享，为会议增添了巨大的可信度。它表明申办方和讲者团队理解临床医生在真实世界中所面临的困境，讨论内容超越了理想化的、一帆风顺的病例。战略启示： 在学术交流中纳入真实、充满挑战的病例，能够有效地建立与医疗界的信任。这表明申办方理解并尊重临床实践的全部复杂性，而不仅仅是那些容易处理的简单场景，从而有助于建立更强大、更持久的合作关系。"
+                    },
+                ],
+                activeSpeaker: 'ding', // Default active speaker
+                planVsActualData: {
+                    coreSpeakerAttendanceRate: '100%',
+                    comparison: [
+                        {
+                            project: '核心讲者',
+                            planned: '3位 (夏文, 景峻, 吴华)',
+                            actual: '3位全部出席并分享',
+                            actualColor: 'green' 
+                        },
+                        {
+                            project: '技术流畅度',
+                            planned: '顺畅',
+                            actual: '出现2次课件共享/播放问题',
+                            actualColor: 'orange'
+                        }
+                    ],
+                },
+                actionSuggestions: [
+                    { text: '向参会医生提供会议中提及的\'癌痛治疗常见误区\'总结单页，用于患者教育。', selected: false },
+                    { text: '跟进讨论中对神经病理性疼痛感兴趣的医生，提供加巴喷丁等辅助用药的联合治疗方案资料。', selected: false },
+                    { text: '针对李华教授提到的基层医院设备限制问题，可以提供区域内具备放疗、介入治疗能力的医院转诊信息，展现综合服务能力。', selected: false }
+                ],
+            },
+            computed: {
+                activeSpeakerData() {
+                    return this.speakers.find(s => s.id === this.activeSpeaker);
+                }
+            },
+            methods: {
+                createTasks() {
+                    const selectedTasks = this.actionSuggestions.filter(task => task.selected);
+                    if (selectedTasks.length === 0) {
+                        window.alert('请至少选择一个任务。');
+                        return;
+                    }
+                    const confirmation = window.confirm(`将创建 ${selectedTasks.length} 个待办任务，是否确定？`);
+                    if (confirmation) {
+                        // 在实际应用中，这里会调用API来创建任务
+                        window.alert(`${selectedTasks.length} 个任务已创建！ (模拟)`);
+                        // 可选：创建后取消选中
+                        this.actionSuggestions.forEach(task => task.selected = false);
+                    } else {
+                        window.alert('操作已取消。');
+                    }
+                },
+                createQuery() {
+                    window.alert('操作: 将该问题发送至医学部接口，并生成邮件草稿给代表确认。')
+                },
+                renderParticipantDurationChart() {
+                const ctx = document.getElementById('participantDurationChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: this.participantDurationData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(tooltipItem) {
+                                        return tooltipItem.label + ': ' + tooltipItem.raw + '人';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+            renderParticipantLevelChart() {
+                const ctx = document.getElementById('participantLevelChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: this.participantLevelData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(tooltipItem) {
+                                        return tooltipItem.label + ': ' + tooltipItem.raw + '人';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+            toggleEvidence(item) {
+                    item.showEvidence = !item.showEvidence;
+                },
+
+            //real_function
+            handleFileUpload(event) {
+                this.file = event.target.files[0];
+                console.log("收到文件：",this.file);
+                this.uploadFile();
+            },
+            uploadFile() {
+                console.log('开始上传')
+                const formData = new FormData();
+                formData.append('file', this.file);
+                    // console.log(this.file)
+                axios.post('http://127.0.0.1:8080/upload', formData)
+                    .then(response => {
+                    console.log('File uploaded successfully');
+
+                    console.log(response)
+                    this.analysis = JSON.parse(response.data.replace('```json','').replace('```',''))
+                    
+                    console.log(this.analysis)
+                    // 在此处处理后端返回的内容
+                    //更新分数；
+                    let socres = this.analysis.analysis.scores;
+                    socres.forEach(e=>{
+                        this.meetingScorecard.forEach(i=>{
+                            if(e.subject === i.title) {
+                                i.score = e.A
+                            }
+                        })
+                    })
+                    })
+
+                    //更新摘要
+                    this.meetingSummary = this.analysis.summary.summary
+                    console.log(this.meetingSummary)
+
+                    
+                    
+                    
+                    .catch(error => {
+                    console.error('Error uploading file:', error);
+                    });
+                }
+            
+            },
+            mounted() {
+            
+            // this.renderParticipantDurationChart();
+            // this.renderParticipantLevelChart();
+        },
+        });
+    </script>
+</body>
+</html>
