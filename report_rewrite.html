@@ -600,7 +600,6 @@
                         if(typeof response.data  === 'object') {
                             this.reportData = response.data;
                             this.loading = false;
-                            console.log('File uploaded successfully');
                             console.log(this.reportData);
                             this.$nextTick(() => {
                                 if (this.reportData && this.reportData.wordCloud) {
@@ -613,7 +612,6 @@
                                 const jsonStr = jsonMatch[0];
                                 this.reportData = JSON.parse(jsonStr);
                                 this.loading = false;
-                                console.log('File uploaded successfully');
                                 console.log(this.reportData);
                                 this.$nextTick(() => {
                                     if (this.reportData && this.reportData.wordCloud) {
@@ -689,6 +687,7 @@
             mounted() {
                 // this.fetchReportData();
                 this.real_mode ? null : this.reportData = this.mockData;
+                this.renderWordCloud();
                 window.addEventListener('resize', this.renderWordCloud);
             },
             beforeDestroy() {
