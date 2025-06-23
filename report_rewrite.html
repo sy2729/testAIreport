@@ -594,13 +594,14 @@
                 const formData = new FormData();
                 formData.append('file', this.file);
                     // console.log(this.file)
-                axios.post('https://testaireport-backend.onrender.com/upload', formData,{timeout: 3000000})
+                axios.post(' https://testaireport-backend.onrender.com/upload', formData,{timeout: 3000000})
                     .then(response => {
+                        console.log("返回的数据类型为： ", typeof response.data);
                         console.log(response.data)
                         if(typeof response.data  === 'object') {
                             this.reportData = response.data;
                             this.loading = false;
-                            console.log(this.reportData);
+                            // console.log(this.reportData);
                             this.$nextTick(() => {
                                 if (this.reportData && this.reportData.wordCloud) {
                                     this.renderWordCloud();
