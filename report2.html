@@ -300,7 +300,11 @@
                             style="text-align: center; padding: 20px; cursor: pointer; transition: all 0.3s ease;">
                             <img :src="item.icon" alt="" style="width: 40px; height: 40px; margin-bottom: 10px;">
                             <p style="font-size: 0.9em; color: #555; margin-bottom: 5px;">{{ item.title }}</p>
-                            <p style="font-size: 1.8em; font-weight: bold; color: #4CAF50;">{{ item.score }}</p>
+                            
+                            <div style="font-size: 1em; font-weight: bold;">
+                                <p style="color: #f1670b;" v-for="tag in item.tags" :key="tag">{{ tag }}</p> 
+                                <p v-if="item.tags && item.tags.length == 0" style="font-size: 2em; font-weight: bold;">✅</p>
+                            </div>
                         </div>
                     </div>
                     <div v-if="selectedCard && selectedCardComment" class="card-comment" style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
@@ -569,26 +573,26 @@
                 meetingScorecard: [
                     {
                         title: '信息传递',
-                        score: 95,
+                        tags: ["信息受众面需拓宽​","专业术语解读欠深入"],
                         comment: ["在阐述阿片类药物滴定策略时，对不同患者群体（如老年患者、肝肾功能不全患者）的特殊调整要点未做充分说明，信息针对性有所欠缺；","在讲解靶向治疗与疼痛管理协同作用时，部分专业术语解释不够通俗，影响部分听众的理解，导致该维度未能获得满分。"],
                         icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMyIgc3Ryb2tlPSIjNkM2M0ZGIiBzdHJva2Utd2lkdGg9IjEuNSIvPgo8Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI3IiBzdHJva2U9IiM2QzYzRkYiIHN0cm9rZS13aWR0aD0iMS41Ii8+CjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwLjI1IiBzdHJva2U9IiM2QzYzRkYiIHN0cm9rZS13aWR0aD0iMS41Ii8+Cjwvc3ZnPgo=',
                     },
                     {
                         title: '推广有效性',
-                        score: 90,
+                        tags: ["创新推广案例可补充​","临床实践结合待加强"],
                         comment: ["推广过程中，对于一些创新疗法（如 RET 抑制剂与疼痛管理结合）的推广案例较少，缺乏实际应用效果的深度展示，难以让听众直观感受到推广内容的优势；并且未充分结合当下医院实际的诊疗流程进行推广，导致推广内容落地性不足，影响了推广有效性的得分。"],
                         icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgMTlWNi4yQzQgNS4wNzk5IDQgNC41MTk4NCA0LjIxNzk5IDQuMDkyMDRDNC40MDkyMyAzLjcxOTYyIDQuNzE5NjIgMy40MDkyMyA1LjA5MjA0IDMuMjE3OTlDNS41MTk4NCAzIDYuMDc5OSAzIDcuMiAzSDE2LjhDMTcuOTIwMSAzIDE4LjQ4MDIgMyAxOC45MDggMy4yMTc5OUMxOS4yODA0IDMuNDA5MjMgMTkuNTkwOCAzLjcxOTYyIDE5Ljc4MjEgNC4wOTIwNEMxOS45OTk5IDQuNTE5ODQgMjAgNS4wNzk5IDIwIDYuMlYxMy44QzIwIDE0LjkyMDEgMjAgMTUuNDgwMiAxOS43ODIxIDE1LjkwOEMxOS41OTA4IDE2LjI4MDQgMTkuMjgwNCAxNi41OTA4IDE4LjkwOCAxNi43ODIxQzE4LjQ4MDIgMTcgMTcuOTIwMSAxNyAxNi44IDE3SDkuNUw0IDE5WiIgc3Ryb2tlPSIjNkM2M0ZGIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=',
                     },
                     {
                         title: '数据强度',
-                        score: 93,
+                        tags: ["协同研究数据待充实​","评估支撑依据可增厚"],
                         comment: ["在阐述癌痛管理与其他抗肿瘤疗法协同作用时，缺乏具体的临床数据对比，如联合治疗与单一治疗在患者疼痛缓解率、生活质量提升等方面的数据差异；", "对于 NRS 等评估工具在不同癌痛患者群体中的有效性数据展示不足，使得数据强度存在一定短板，导致扣分。"],
                         icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTcgMTBMMSAxNi41TDcgMjMiIHN0cm9rZT0iIzZDNjNGRiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8cGF0aCBkPSJNMTcgMTBMMjMgMTYuNUwxNyAyMyIgc3Ryb2tlPSIjNkM2M0ZGIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjxwYXRoIGQ9Ik0xMiA0TDUuNSAxMEgxOC41TDEyIDRaIiBmaWxsPSIjNkM2M0ZGIi8+Cjwvc3ZnPgo=',
                     },
                     {
                         title: '讲者评估',
-                        score: 89,
-                        comment: ["部分讲者在讲解过程中，与听众的互动较少，未能及时解答听众的疑问，影响了听众的参与感；","个别讲者在病例分享环节，对病例背景信息介绍不够详细，导致听众对案例的理解不够透彻，综合这些因素，使得讲者评估的分数相对较低。"],
+                        tags: [],
+                        comment: [],
                         icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSIzIiBzdHJva2U9IiM2QzYzRkYiIHN0cm9rZS13aWR0aD0iMS41Ii8+CjxwYXRoIGQ9Ik0xNyAxMy42NzY1QzE3IDEyLjE5NjcgMTUuODAzMyAxMSAxMiAxMUM4LjE5NjcyIDExIDcgMTIuMTk2NyA3IDEzLjY3NjVWMTVIMTdWMTMuNjc2NVoiIHN0cm9rZT0iIzZDNjNGRiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8cGF0aCBkPSJNOSAxOFYyMUgxNVYxOCIgc3Ryb2tlPSIjNkM2M0ZGIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjwvc3ZnPgo=',
                     }
                 ],
