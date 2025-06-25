@@ -518,10 +518,19 @@
                     <h3>核心主题</h3>
                     <p v-html="activeSpeakerData.keyMessage"></p>
                     <div style="margin-bottom: 25px;">
-                        <p><strong>关键信息讨论时长:</strong></p>
-                        <div v-if="activeSpeakerData.name === '夏文'">27 分钟</div>
-                         <div v-if="activeSpeakerData.name === '景峻'">14 分钟</div>
-                         <div v-if="activeSpeakerData.name === '吴华'">17 分钟</div>
+                        <div v-if="activeSpeakerData.name === '夏文'">
+                            <p><strong>关键信息讨论时长: <span class="keyword-tag">{{activeSpeakerData.keyMessageTag}}</span></strong></p>
+                            
+                            27 分钟
+                        </div>
+                         <div v-if="activeSpeakerData.name === '景峻'">
+                            <p><strong>关键信息讨论时长: <span class="keyword-tag">{{activeSpeakerData.keyMessageTag}}</span></strong></p>
+                            14 分钟
+                        </div>
+                         <div v-if="activeSpeakerData.name === '吴华'">
+                            <p><strong>关键信息讨论时长: <span class="keyword-tag">{{activeSpeakerData.keyMessageTag}}</span></strong></p>
+                            17 分钟
+                        </div>
                     </div>
                     <h3>契合度与偏差分析:</h3>
                     <p v-for="fb in activeSpeakerData.feedback" :key="fb" >{{ fb }}</p>
@@ -699,6 +708,7 @@
                         level:"B",
                         duration: '29分钟',
                         focus: '"癌痛规范化滴定病例分享"',
+                        keyMessageTag:"及早镇痛的必要性及其人文关怀",
                         keywords: ["高度契合"],
                         keyMessage:"<strong>及早镇痛理念与背景。</strong>夏医生的分享为整个会议的癌痛管理讨论奠定了理论和实践基础。他不仅从临床角度，更从人文关怀的层面构建了讨论的框架，通过引用中国在“死亡幸福指数”排名偏后的数据 ，深刻地指出了提供有尊严的临终关怀的社会意义。",
                         feedback: ["讲者的理论阐述和病例分享完全围绕“规范化滴定”这一核心主题展开。内容具有很强的基础性和指导性，与议题标题高度匹配。"]
@@ -707,6 +717,7 @@
                         id: 'wu',
                         name: '景峻',
                         level:"C",
+                        keyMessageTag:"疼痛管理与多模式的肿瘤治疗策略整合实践",
                         duration: '15分钟',
                         focus: '"癌痛全程管理病例分享"',
                         keywords: ["部分契合"],
@@ -719,6 +730,7 @@
                         duration: '18分钟',
                         level:"A",
                         focus: '"癌痛规范化管理病例分享"',
+                        keyMessageTag:"规范化的临床实践",
                         keywords: ["高度契合"],
                         keyMessage:"<strong>软组织肉瘤超大剂量镇痛病例。</strong>吴医生的分享提供了一个冷静而务实的视角，聚焦于一位患有难治性疼痛的进行性肉瘤患者的长期管理，深刻探讨了阿片类药物耐受性和累积毒性这两大挑战。",
                         feedback: ["对特定领域的深度挖掘。 该分享是对“规范化管理”在极具挑战性的长期姑息治疗场景中的一次生动实践展示。它完美地阐释了在真实世界中管理药物耐受性和不良反应的复杂性，这些都是规范化管理的核心组成部分。"]
